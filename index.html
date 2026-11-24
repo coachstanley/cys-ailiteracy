@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>AI 守護特工：向善協同戰 (豪華版) | 明愛元朗陳震夏中學</title>
+  <title>AI 守護特工：決戰思維外判巨獸 (道具加強版) | 明愛元朗陳震夏中學</title>
   <!-- 
     ===================================================================
-    遊戲名稱：AI 守護特工：向善協同戰 (Deluxe Edition)
+    遊戲名稱：AI 守護特工：向善協同戰 (Item System Edition)
     策劃設計：明愛元朗陳震夏中學 — 張耀宗副校長
-    研發規格：HTML5 Responsive Canvas Engine + Web Audio Synthesizer
-    學習參照：香港教育局《中小學數字教育發展藍圖》附篇一 AI 素養學習架構
+    新增系統：數字素養道具箱 (事實查核透視鏡 / 提示詞芯片 / 誠信護盾)
+    研發規格：HTML5 Responsive Canvas + Web Audio API 離線合成
     ===================================================================
   -->
   <style>
@@ -19,7 +19,7 @@
       --secondary: #a855f7;
       --accent: #f43f5e;
       --gold: #fbbf24;
-      --panel: rgba(15, 23, 42, 0.88);
+      --panel: rgba(15, 23, 42, 0.92);
     }
     * {
       box-sizing: border-box;
@@ -59,7 +59,7 @@
       height: 100%;
       object-fit: contain;
     }
-    /* HUD Overlays */
+    /* Top HUD Overlays */
     .hud-top {
       position: absolute;
       top: 14px;
@@ -92,7 +92,6 @@
       border-radius: 5px;
       margin-top: 5px;
       overflow: hidden;
-      position: relative;
     }
     .bar-hp {
       height: 100%;
@@ -105,6 +104,97 @@
       width: 0%;
       background: linear-gradient(90deg, var(--secondary), var(--primary));
       transition: width 0.2s;
+    }
+    /* Hotbar Inventory (Bottom Left) */
+    #inventory-bar {
+      position: absolute;
+      bottom: 18px;
+      left: 18px;
+      display: flex;
+      gap: 10px;
+      z-index: 25;
+    }
+    .item-slot {
+      width: 54px;
+      height: 54px;
+      background: var(--panel);
+      border: 1.5px solid rgba(0, 240, 255, 0.3);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      transition: all 0.2s;
+    }
+    .item-slot:hover {
+      border-color: var(--primary);
+      transform: translateY(-3px);
+    }
+    .item-slot.active {
+      border-color: var(--gold);
+      box-shadow: 0 0 15px rgba(251, 191, 36, 0.5);
+    }
+    .item-icon { font-size: 1.3rem; }
+    .item-key {
+      position: absolute;
+      top: 2px;
+      left: 4px;
+      font-size: 0.62rem;
+      color: var(--primary);
+      font-weight: bold;
+    }
+    .item-count {
+      position: absolute;
+      bottom: 2px;
+      right: 4px;
+      font-size: 0.72rem;
+      color: #fff;
+      font-weight: bold;
+      background: rgba(0,0,0,0.6);
+      padding: 0 4px;
+      border-radius: 4px;
+    }
+    /* Boss Health HUD (Top Center) */
+    #boss-hud {
+      display: none;
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 380px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 2px solid var(--accent);
+      border-radius: 12px;
+      padding: 10px 16px;
+      box-shadow: 0 0 30px rgba(244, 63, 94, 0.5);
+      text-align: center;
+      z-index: 30;
+      backdrop-filter: blur(12px);
+    }
+    .boss-name-tag {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: 1.5px;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .boss-bar-bg {
+      width: 100%;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .boss-bar-fill {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #fb7185, #e11d48);
+      transition: width 0.15s ease-out;
     }
     .footer-badge {
       position: absolute;
@@ -120,7 +210,7 @@
       pointer-events: none;
       z-index: 20;
     }
-    /* Difficulty & Start Menu Modal */
+    /* Start Menu */
     #start-modal {
       position: absolute;
       width: 90%;
@@ -134,17 +224,8 @@
       box-shadow: 0 0 60px rgba(0, 240, 255, 0.35);
       backdrop-filter: blur(14px);
     }
-    #start-modal h2 {
-      font-size: 1.5rem;
-      color: var(--primary);
-      margin-bottom: 4px;
-    }
-    .difficulty-group {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-      margin: 22px 0;
-    }
+    #start-modal h2 { font-size: 1.5rem; color: var(--primary); margin-bottom: 4px; }
+    .difficulty-group { display: grid; grid-template-columns: 1fr; gap: 12px; margin: 20px 0; }
     .diff-btn {
       padding: 14px 18px;
       background: rgba(255,255,255,0.05);
@@ -152,17 +233,12 @@
       border-radius: 10px;
       color: #fff;
       cursor: pointer;
-      font-size: 0.95rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
       transition: all 0.25s;
     }
-    .diff-btn:hover {
-      background: rgba(0, 240, 255, 0.18);
-      border-color: var(--primary);
-      transform: scale(1.02);
-    }
+    .diff-btn:hover { background: rgba(0, 240, 255, 0.18); transform: scale(1.02); }
     .diff-btn.selected {
       background: linear-gradient(90deg, rgba(168,85,247,0.35), rgba(0,240,255,0.35));
       border-color: var(--primary);
@@ -179,11 +255,8 @@
       border-radius: 10px;
       cursor: pointer;
       box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
-      transition: opacity 0.2s;
     }
-    .start-run-btn:hover { opacity: 0.9; }
-
-    /* Interactive Quiz Modal */
+    /* Quiz Modal */
     #quiz-modal {
       position: absolute;
       display: none;
@@ -197,12 +270,6 @@
       backdrop-filter: blur(14px);
       box-shadow: 0 0 50px rgba(0, 240, 255, 0.4);
     }
-    #quiz-timer {
-      font-size: 0.85rem;
-      color: var(--accent);
-      font-weight: bold;
-      margin-bottom: 8px;
-    }
     .quiz-btn {
       width: 100%;
       padding: 13px 15px;
@@ -212,32 +279,32 @@
       color: #fff;
       border-radius: 8px;
       text-align: left;
-      font-size: 0.92rem;
       cursor: pointer;
+      font-size: 0.92rem;
       transition: all 0.2s;
     }
-    .quiz-btn:hover {
-      background: rgba(0, 240, 255, 0.2);
-      border-color: var(--primary);
-      transform: translateX(5px);
+    .quiz-btn:hover { background: rgba(0, 240, 255, 0.2); transform: translateX(5px); }
+    .quiz-btn.eliminated {
+      opacity: 0.28;
+      text-decoration: line-through;
+      pointer-events: none;
+      border-color: #64748b;
     }
-
     /* Mobile Controls */
     #touch-bar {
       display: none;
       position: absolute;
       bottom: 22px;
-      left: 18px;
       right: 18px;
-      justify-content: space-between;
+      gap: 12px;
       align-items: flex-end;
       pointer-events: none;
       z-index: 40;
     }
     .t-btn {
       pointer-events: auto;
-      width: 68px;
-      height: 68px;
+      width: 66px;
+      height: 66px;
       border-radius: 50%;
       background: rgba(0, 240, 255, 0.12);
       border: 2px solid var(--primary);
@@ -251,12 +318,15 @@
     .t-btn:active { background: rgba(0, 240, 255, 0.4); transform: scale(0.92); }
     #dpad {
       pointer-events: auto;
+      position: absolute;
+      bottom: 22px;
+      left: 18px;
       width: 120px;
       height: 120px;
       background: rgba(255, 255, 255, 0.03);
       border: 2px dashed rgba(0, 240, 255, 0.2);
       border-radius: 50%;
-      position: relative;
+      z-index: 40;
     }
     #dpad-stick {
       position: absolute;
@@ -288,7 +358,7 @@
 <div id="game-container">
   <canvas id="gameCanvas" width="960" height="600"></canvas>
 
-  <!-- Top HUD -->
+  <!-- Top Status -->
   <div class="hud-top">
     <div class="hud-card">
       <div class="school-title">CARITAS YLCCSS // AI DEFENDER</div>
@@ -302,71 +372,97 @@
     </div>
   </div>
 
+  <!-- Hotbar Inventory -->
+  <div id="inventory-bar">
+    <div class="item-slot" id="slot-lens" onclick="useItem('lens')">
+      <span class="item-key">[1]</span>
+      <span class="item-icon">🔍</span>
+      <span class="item-count" id="count-lens">1</span>
+    </div>
+    <div class="item-slot" id="slot-prompt" onclick="useItem('prompt')">
+      <span class="item-key">[2]</span>
+      <span class="item-icon">⚡</span>
+      <span class="item-count" id="count-prompt">1</span>
+    </div>
+    <div class="item-slot" id="slot-shield" onclick="useItem('shield')">
+      <span class="item-key">[3]</span>
+      <span class="item-icon">🛡️</span>
+      <span class="item-count" id="count-shield">1</span>
+    </div>
+  </div>
+
+  <!-- Boss Health Bar -->
+  <div id="boss-hud">
+    <div class="boss-name-tag">
+      <span>👑 BOSS: 思維外判巨獸</span>
+      <span id="boss-hp-num">300 / 300</span>
+    </div>
+    <div class="boss-bar-bg"><div class="boss-bar-fill" id="boss-hp-bar"></div></div>
+  </div>
+
   <div id="toast">⚠️ 提示訊息</div>
 
-  <!-- Footer Signature -->
   <div class="footer-badge">
     明愛元朗陳震夏中學 — 張耀宗副校長 策劃設計 © 2026 CYLCCSS
   </div>
 
-  <!-- Start & Difficulty Selection Modal -->
+  <!-- Start Menu -->
   <div id="start-modal">
     <div style="font-size: 0.8rem; color: var(--gold); letter-spacing: 1px;">明愛元朗陳震夏中學 • 校本數字教育實踐</div>
-    <h2>AI 守護特工：向善協同戰</h2>
-    <p style="font-size: 0.88rem; color: #94a3b8; margin-top: 6px;">請依據學習階段選擇訓練難度：</p>
+    <h2>AI 守護特工：決戰思維外判巨獸</h2>
+    <p style="font-size: 0.88rem; color: #94a3b8; margin-top: 6px;">運用「查核透鏡、提示詞芯片與誠信護盾」，瓦解終極認知危機！</p>
 
     <div class="difficulty-group">
       <div class="diff-btn selected" onclick="selectDiff('junior', this)">
         <span>🌱 見習特工 (Junior)</span>
-        <span style="font-size: 0.8rem; color: #10b981;">初中階段 • 探索模式</span>
+        <span style="font-size: 0.8rem; color: #10b981;">初中探索 • 巨獸弱化</span>
       </div>
       <div class="diff-btn" onclick="selectDiff('standard', this)">
         <span>🛡️ 向善特工 (Standard)</span>
-        <span style="font-size: 0.8rem; color: var(--primary);">高中常規 • 實戰考驗</span>
+        <span style="font-size: 0.8rem; color: var(--primary);">高中實戰 • 彈幕對決</span>
       </div>
       <div class="diff-btn" onclick="selectDiff('master', this)">
         <span>🔥 架構大師 (Master)</span>
-        <span style="font-size: 0.8rem; color: var(--accent);">ICT 尖子 • 限時極限</span>
+        <span style="font-size: 0.8rem; color: var(--accent);">尖子極限 • 狂暴衝擊</span>
       </div>
     </div>
 
-    <button class="start-run-btn" onclick="startGame()">啟動心智網絡特工任務 ➔</button>
+    <button class="start-run-btn" onclick="startGame()">啟動心智特工網絡 ➔</button>
   </div>
 
   <!-- Quiz Modal -->
   <div id="quiz-modal">
-    <div id="quiz-timer"></div>
+    <div id="quiz-timer" style="font-size:0.85rem; color:var(--accent); font-weight:bold; margin-bottom:6px;"></div>
+    <div id="quiz-item-hint" style="font-size:0.78rem; color:var(--primary); font-weight:bold; margin-bottom:6px; display:none;">🔍 事實查核透鏡生效中：已自動排除 1 個幻覺誘餌！</div>
     <h3 id="quiz-title" style="color:var(--primary); margin-bottom:8px;">📡 連接終端</h3>
     <div style="font-size:0.75rem; color:var(--gold); margin-bottom:12px;">依據教育局《中小學數字教育發展藍圖》校本案例研發</div>
     <p id="quiz-desc" style="font-size:0.95rem; line-height:1.5; color:#dbe7ff; margin-bottom:18px;">題目載入中...</p>
     <div id="quiz-options"></div>
   </div>
 
-  <!-- Mobile Touch Bar -->
+  <!-- Mobile Controls -->
+  <div id="dpad" style="display:none;"><div id="dpad-stick"></div></div>
   <div id="touch-bar">
-    <div id="dpad"><div id="dpad-stick"></div></div>
-    <div style="display:flex; gap:14px;">
-      <div class="t-btn" id="btn-interact" style="background:rgba(251,191,36,0.15); border-color:var(--gold); font-size:0.8rem;">查核 [E]</div>
-      <div class="t-btn" id="btn-attack">光刃 [J]</div>
-    </div>
+    <div class="t-btn" id="btn-interact" style="background:rgba(251,191,36,0.15); border-color:var(--gold); font-size:0.8rem;">查核 [E]</div>
+    <div class="t-btn" id="btn-attack">光刃 [J]</div>
   </div>
 </div>
 
 <script>
-  // Web Audio Synthesizer
+  // Web Audio Synth
   const Sound = {
     ctx: null,
     init() {
       if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
     },
-    play(freq, type, dur, endFreq = null) {
+    play(freq, type, dur, endFreq = null, vol = 0.12) {
       if (!this.ctx) return;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = type;
       osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
       if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, this.ctx.currentTime + dur);
-      gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+      gain.gain.setValueAtTime(vol, this.ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
@@ -375,6 +471,13 @@
     },
     slash() { this.play(520, 'sawtooth', 0.12, 140); },
     hit() { this.play(160, 'square', 0.15, 60); },
+    lensOn() { 
+      this.play(880, 'sine', 0.15); 
+      setTimeout(() => this.play(1174, 'sine', 0.25), 120);
+    },
+    itemPickup() { this.play(659, 'triangle', 0.15, 880); },
+    bossShoot() { this.play(280, 'sine', 0.18, 90, 0.08); },
+    bossRoar() { this.play(90, 'sawtooth', 0.6, 40, 0.25); },
     win() {
       [523, 659, 783, 1046].forEach((f, i) => setTimeout(() => this.play(f, 'sine', 0.2), i * 110));
     },
@@ -384,7 +487,7 @@
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
 
-  let gameState = 'MENU'; // 'MENU' | 'PLAY' | 'QUIZ' | 'WIN' | 'OVER'
+  let gameState = 'MENU';
   let currentDifficulty = 'junior';
   let keys = {};
   let touchVec = { x: 0, y: 0 };
@@ -393,17 +496,28 @@
   let coresFound = 0;
   let kills = 0;
 
-  // 難度配置
   const diffConfig = {
-    junior: { hp: 150, monsterSpd: 1.3, penalty: 5, timer: 0, desc: '初階模式' },
-    standard: { hp: 100, monsterSpd: 2.0, penalty: 15, timer: 0, desc: '常規模式' },
-    master: { hp: 80, monsterSpd: 2.6, penalty: 25, timer: 20, desc: '大師限時模式' }
+    junior: { hp: 150, monsterSpd: 1.2, bossHp: 200, penalty: 5, timer: 0, desc: '初階探索' },
+    standard: { hp: 100, monsterSpd: 1.8, bossHp: 320, penalty: 15, timer: 0, desc: '常規實戰' },
+    master: { hp: 80, monsterSpd: 2.5, bossHp: 480, penalty: 25, timer: 20, desc: '大師極限' }
   };
 
-  // 玩家特工
+  // 道具背包與狀態
+  const inventory = {
+    lens: 1,    // 事實查核透視鏡
+    prompt: 1,  // 提示詞增幅芯片
+    shield: 1   // 學術誠信護盾
+  };
+
+  const buffTimers = {
+    lens: 0,    // 透鏡生效剩餘幀數
+    prompt: 0,  // 提示詞增幅剩餘幀數
+    shield: 0   // 誠信護盾是否存續 (1 or 0)
+  };
+
   const player = {
     x: 480,
-    y: 300,
+    y: 320,
     r: 18,
     speed: 4.0,
     hp: 100,
@@ -417,33 +531,46 @@
     trail: []
   };
 
-  // 數字教育藍圖題庫
+  const boss = {
+    x: 480,
+    y: 180,
+    r: 44,
+    hp: 300,
+    maxHp: 300,
+    speed: 1.4,
+    angle: 0,
+    shootCooldown: 0
+  };
+
+  let droppedItems = []; // 地面掉落物
+  let bossProjectiles = [];
+
   const quizPool = [
     {
       title: "終端 01 // 破除思維外判 (Anti-Hallucination)",
-      desc: "專題探究時，生成式 AI 聲稱引用了『1955年港府成立晶片支援處』的論文。張副校長提醒學生需慎思明辨，你的第一反應是？",
+      desc: "專題報告中，AI 捏造了一篇看似權威但根本不存在的香港歷史文獻。張耀宗副校長提醒學生需慎思明辨，你的第一反應是？",
       options: [
-        { t: "直接複製：文筆流暢且格式完整，可節省翻查時間。", correct: false },
-        { t: "啟動事實查核：交叉比對檔案處及可靠文獻，揪出 AI 幻覺。", correct: true },
-        { t: "連續詰問同一 AI 直到它承認錯誤為止。", correct: false }
+        { t: "直接引用：文字流暢且格式完整，可節省大量翻查文獻時間。", correct: false, isTrap: true },
+        { t: "啟動事實查核：交叉比對檔案處及可信文獻，揪出 AI 幻覺。", correct: true, isTrap: false },
+        { t: "反覆詢問同一 AI 直到它發誓自己沒有說謊為止。", correct: false, isTrap: false }
       ]
     },
     {
       title: "終端 02 // 擺脫高技術低思維 (Prompt Engineering)",
-      desc: "教育局強調人機協同需避免將思考全盤外判。以下哪種提示詞能真正發揮生成式 AI 輔助高階思維的價值？",
+      desc: "教育局強調人機協同需避免將思考全盤委託給機器。以下哪種提示詞能真正發揮生成式 AI 引導高階思維的效益？",
       options: [
-        { t: "「請擔任學術教練，針對我的研究初稿提出 3 個批判性反思盲點以啟發思考。」", correct: true },
-        { t: "「直接寫一份 1000 字報告給我交功課，並保證能繞過抄襲檢測。」", correct: false },
-        { t: "「列出全港最容易拿滿分的題目，直接給我標準答案。」", correct: false }
+        { t: "「請擔任學術教練，針對我的研究初稿提出 3 個批判性反思問題以啟發思路。」", correct: true, isTrap: false },
+        { t: "「直接寫一份 1000 字專題給我交功課，並保證能避過抄襲檢測。」", correct: false, isTrap: true },
+        { t: "「列出全港最容易拿滿分的題目，直接給我標準答案。」", correct: false, isTrap: false }
       ]
     },
     {
-      title: "終端 03 // 捍衛科技向善倫理 (Ethics & Integrity)",
+      title: "終端 03 // 捍衛科技向善倫理 (Academic Integrity)",
       desc: "呈交高中專題研習（SBA）時，你運用 AI 潤色了結論段落。符合明愛元朗陳震夏中學及局方指引的誠信做法是？",
       options: [
-        { t: "保持隱瞞：只要沒有逐字照抄，不需交代曾使用 AI 工具。", correct: false },
-        { t: "誠信披露：在附錄填寫『AI 協作聲明』，載明工具、提示詞用途與人類修正紀錄。", correct: true },
-        { t: "全面禁用：因擔心被誤解，所以徹底拒絕使用任何數字科技。", correct: false }
+        { t: "保持隱瞞：只要沒有逐字照抄，不需交代曾使用 AI 輔助。", correct: false, isTrap: true },
+        { t: "誠信披露：在附錄填寫『AI 協作聲明』，列明工具、用途與人類修正紀錄。", correct: true, isTrap: false },
+        { t: "全面禁用：因擔心被誤解，所以徹底拒絕使用任何數字科技。", correct: false, isTrap: false }
       ]
     }
   ];
@@ -451,7 +578,7 @@
   const terminals = [
     { x: 190, y: 160, solved: false, quiz: quizPool[0] },
     { x: 770, y: 160, solved: false, quiz: quizPool[1] },
-    { x: 480, y: 470, solved: false, quiz: quizPool[2] }
+    { x: 480, y: 480, solved: false, quiz: quizPool[2] }
   ];
 
   let enemies = [];
@@ -459,7 +586,6 @@
   let floatingTexts = [];
   let stars = [];
 
-  // 生成背景流動光子星空
   for (let i = 0; i < 70; i++) {
     stars.push({
       x: Math.random() * 960,
@@ -480,12 +606,15 @@
     const cfg = diffConfig[currentDifficulty];
     player.hp = cfg.hp;
     player.maxHp = cfg.hp;
+    boss.hp = cfg.bossHp;
+    boss.maxHp = cfg.bossHp;
+    document.getElementById('boss-hp-num').textContent = `${boss.hp} / ${boss.maxHp}`;
     document.getElementById('start-modal').style.display = 'none';
     gameState = 'PLAY';
 
-    // 初始化魔物
     enemies = [];
     for (let i = 0; i < 6; i++) spawnEnemy(i % 2 === 0 ? 'slime' : 'drone');
+    updateInventoryHUD();
   }
 
   function spawnEnemy(type) {
@@ -498,40 +627,124 @@
     else { x = -20; y = Math.random() * canvas.height; }
 
     if (type === 'slime') {
-      enemies.push({ x, y, r: 18, hp: 45, maxHp: 45, speed: 1.1 * spdMultiplier, type: 'slime', name: '幻覺史萊姆' });
+      enemies.push({ x, y, r: 18, hp: 45, maxHp: 45, speed: 1.1 * spdMultiplier, type: 'slime', name: '幻覺怪' });
     } else {
-      enemies.push({ x, y, r: 15, hp: 35, maxHp: 35, speed: 1.5 * spdMultiplier, type: 'drone', name: '偏見無人機' });
+      enemies.push({ x, y, r: 15, hp: 35, maxHp: 35, speed: 1.5 * spdMultiplier, type: 'drone', name: '偏見怪' });
     }
   }
 
-  // 鍵盤與互動綁定
+  // 道具使用邏輯
+  function useItem(type) {
+    if (inventory[type] <= 0) {
+      showToast('⚠️ 該道具存量為 0，請探索地圖獲取！');
+      return;
+    }
+    inventory[type]--;
+
+    if (type === 'lens') {
+      buffTimers.lens = 480; // 8 秒 (60 FPS)
+      Sound.lensOn();
+      screenShake = 6;
+      showToast('🔍 事實查核透鏡啟動！全場弱點顯露，查核傷害倍增！');
+    } else if (type === 'prompt') {
+      buffTimers.prompt = 360; // 6 秒
+      Sound.lensOn();
+      showToast('⚡ 提示詞增幅芯片激活！斬擊範圍與移速大幅提升！');
+    } else if (type === 'shield') {
+      buffTimers.shield = 1;
+      Sound.lensOn();
+      showToast('🛡️ 學術誠信護盾展開！可抵禦一次傷害或答題失誤！');
+    }
+    updateInventoryHUD();
+  }
+
+  function updateInventoryHUD() {
+    document.getElementById('count-lens').textContent = inventory.lens;
+    document.getElementById('count-prompt').textContent = inventory.prompt;
+    document.getElementById('count-shield').textContent = inventory.shield;
+
+    document.getElementById('slot-lens').classList.toggle('active', buffTimers.lens > 0);
+    document.getElementById('slot-prompt').classList.toggle('active', buffTimers.prompt > 0);
+    document.getElementById('slot-shield').classList.toggle('active', buffTimers.shield > 0);
+  }
+
+  function dropRandomItem(x, y) {
+    const r = Math.random();
+    let type = 'lens';
+    let icon = '🔍';
+    let color = '#00f0ff';
+
+    if (r < 0.4) {
+      type = 'lens'; icon = '🔍'; color = '#00f0ff';
+    } else if (r < 0.75) {
+      type = 'prompt'; icon = '⚡'; color = '#a855f7';
+    } else {
+      type = 'shield'; icon = '🛡️'; color = '#fbbf24';
+    }
+
+    droppedItems.push({ x, y, type, icon, color, r: 14, life: 700 });
+  }
+
+  // 鍵盤監聽（支援 [1], [2], [3] 使用道具）
   window.addEventListener('keydown', e => {
     Sound.init();
     keys[e.key.toLowerCase()] = true;
     if (e.key === ' ' || e.key.toLowerCase() === 'j') triggerAttack();
     if (e.key.toLowerCase() === 'e') triggerInteract();
+    if (e.key === '1') useItem('lens');
+    if (e.key === '2') useItem('prompt');
+    if (e.key === '3') useItem('shield');
   });
   window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
   function triggerAttack() {
-    if (gameState !== 'PLAY' || player.attackCooldown > 0) return;
+    if ((gameState !== 'PLAY' && gameState !== 'BOSS_BATTLE') || player.attackCooldown > 0) return;
     player.attackTimer = 14;
-    player.attackCooldown = 20;
+    player.attackCooldown = 18;
     Sound.slash();
 
+    // 提示詞增幅加成範圍
+    const isPromptBoost = buffTimers.prompt > 0;
+    const attackReach = isPromptBoost ? 80 : 55;
     const slashCenter = { x: player.x + player.facing.x * 35, y: player.y + player.facing.y * 35 };
+
+    // 透鏡加成傷害
+    const isLensActive = buffTimers.lens > 0;
+    let baseDmg = 28 + player.lvl * 6;
+    if (isLensActive) baseDmg = Math.round(baseDmg * 2.0);
+
+    // 斬殺小怪
     enemies.forEach(en => {
-      if (Math.hypot(en.x - slashCenter.x, en.y - slashCenter.y) < 55) {
-        const dmg = 28 + player.lvl * 6;
-        en.hp -= dmg;
-        screenShake = 6;
+      if (Math.hypot(en.x - slashCenter.x, en.y - slashCenter.y) < attackReach) {
+        en.hp -= baseDmg;
+        screenShake = isLensActive ? 8 : 5;
         Sound.hit();
-        spawnText(en.x, en.y, `-${dmg}`, '#00ffaa');
-        createExplosion(en.x, en.y, '#00f0ff', 10);
+        spawnText(en.x, en.y, `-${baseDmg}`, isLensActive ? '#fbbf24' : '#00ffaa');
+        createExplosion(en.x, en.y, '#00f0ff', 8);
         en.x += player.facing.x * 24;
         en.y += player.facing.y * 24;
       }
     });
+
+    // 斬殺 Boss
+    if (gameState === 'BOSS_BATTLE') {
+      if (Math.hypot(boss.x - slashCenter.x, boss.y - slashCenter.y) < boss.r + (isPromptBoost ? 50 : 35)) {
+        let bDmg = 24 + player.lvl * 5;
+        if (isLensActive) bDmg = Math.round(bDmg * 1.8);
+
+        boss.hp -= bDmg;
+        screenShake = 10;
+        Sound.hit();
+        spawnText(boss.x, boss.y, `-${bDmg}`, '#ff0055');
+        createExplosion(boss.x, boss.y, '#f43f5e', 12);
+
+        const pct = Math.max(0, (boss.hp / boss.maxHp) * 100);
+        document.getElementById('boss-hp-bar').style.width = `${pct}%`;
+        document.getElementById('boss-hp-num').textContent = `${Math.max(0, Math.round(boss.hp))} / ${boss.maxHp}`;
+
+        if (boss.hp <= 0) triggerBossDefeated();
+      }
+    }
   }
 
   function triggerInteract() {
@@ -551,6 +764,7 @@
     const desc = document.getElementById('quiz-desc');
     const opts = document.getElementById('quiz-options');
     const timerDiv = document.getElementById('quiz-timer');
+    const itemHint = document.getElementById('quiz-item-hint');
 
     title.textContent = `📡 ${terminal.quiz.title}`;
     desc.textContent = terminal.quiz.desc;
@@ -572,10 +786,22 @@
       timerDiv.textContent = '';
     }
 
+    // 透鏡效果：若透鏡正在生效，剔除一個陷阱選項
+    const hasLens = buffTimers.lens > 0;
+    itemHint.style.display = hasLens ? 'block' : 'none';
+
+    let eliminatedOne = false;
     terminal.quiz.options.forEach(opt => {
       const btn = document.createElement('button');
       btn.className = 'quiz-btn';
       btn.textContent = opt.t;
+
+      if (hasLens && opt.isTrap && !eliminatedOne) {
+        btn.classList.add('eliminated');
+        btn.textContent += ' 🚫 [透鏡識破虛假誘餌]';
+        eliminatedOne = true;
+      }
+
       btn.onclick = () => {
         if (quizTimerInterval) clearInterval(quizTimerInterval);
         handleQuizAnswer(opt.correct, terminal);
@@ -595,18 +821,35 @@
       terminal.solved = true;
       coresFound++;
       document.getElementById('core-txt').textContent = `${coresFound} / 3`;
-      showToast('🌟 決策卓越！思辨能量注入，恢復生命力！');
-      player.hp = Math.min(player.maxHp, player.hp + 45);
-      player.exp += 50;
+      showToast('🌟 決策卓越！思辨核心解除防護！獲贈「誠信護盾」！');
+      
+      inventory.shield++;
+      updateInventoryHUD();
+
+      player.hp = Math.min(player.maxHp, player.hp + 40);
+      player.exp += (buffTimers.prompt > 0 ? 80 : 50);
       checkLevelUp();
       modal.style.display = 'none';
-      gameState = 'PLAY';
-      if (coresFound >= 3) triggerVictory();
+      
+      if (coresFound >= 3) {
+        startBossEncounter();
+      } else {
+        gameState = 'PLAY';
+      }
     } else {
+      // 護盾抵消答錯懲罰
+      if (buffTimers.shield > 0) {
+        buffTimers.shield = 0;
+        updateInventoryHUD();
+        Sound.hit();
+        showToast('🛡️ 學術誠信護盾生效！成功抵消思維反噬懲罰！');
+        return;
+      }
+
       Sound.err();
       player.hp -= cfg.penalty;
       screenShake = 12;
-      showToast(`❌ 墮入思維外判陷阱！遭受數據反噬 -${cfg.penalty} HP`);
+      showToast(`❌ 墮入思維外判陷阱！遭受反噬 -${cfg.penalty} HP`);
       updateHUD();
       if (player.hp <= 0) {
         modal.style.display = 'none';
@@ -615,7 +858,27 @@
     }
   }
 
-  function triggerVictory() { gameState = 'WIN'; Sound.win(); }
+  function startBossEncounter() {
+    gameState = 'BOSS_ENTERING';
+    Sound.bossRoar();
+    screenShake = 25;
+    enemies = [];
+    showToast('🚨 警報！終極實體「思維外判巨獸」破空而降！');
+
+    setTimeout(() => {
+      document.getElementById('boss-hud').style.display = 'block';
+      gameState = 'BOSS_BATTLE';
+    }, 2200);
+  }
+
+  function triggerBossDefeated() {
+    gameState = 'WIN';
+    Sound.win();
+    screenShake = 20;
+    createExplosion(boss.x, boss.y, '#00f0ff', 40);
+    createExplosion(boss.x, boss.y, '#fbbf24', 30);
+  }
+
   function triggerGameOver() { gameState = 'OVER'; Sound.err(); }
 
   function showToast(msg) {
@@ -632,14 +895,14 @@
   function createExplosion(x, y, color, count = 8) {
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const spd = Math.random() * 3.5 + 1;
+      const spd = Math.random() * 3.8 + 1;
       particles.push({
         x, y,
         vx: Math.cos(angle) * spd,
         vy: Math.sin(angle) * spd,
         color,
         life: 25,
-        size: Math.random() * 3 + 1.5
+        size: Math.random() * 3.5 + 1.5
       });
     }
   }
@@ -662,19 +925,25 @@
     document.getElementById('exp-bar').style.width = `${Math.min(100, (player.exp / player.maxExp) * 100)}%`;
   }
 
-  // 主更新循環
+  // 主更新邏輯
   function update() {
     gameTime += 0.05;
     if (screenShake > 0) screenShake--;
 
-    // 背景星光流動
+    // 道具 Buff 倒數
+    if (buffTimers.lens > 0) buffTimers.lens--;
+    if (buffTimers.prompt > 0) buffTimers.prompt--;
+    if (gameTime % 1 < 0.05) updateInventoryHUD();
+
     stars.forEach(s => {
       s.y += s.spd;
       if (s.y > canvas.height) s.y = 0;
     });
 
-    if (gameState !== 'PLAY') return;
+    if (gameState !== 'PLAY' && gameState !== 'BOSS_BATTLE') return;
 
+    // 移動速度加成
+    const curSpeed = player.speed * (buffTimers.prompt > 0 ? 1.35 : 1.0);
     let dx = 0, dy = 0;
     if (keys['w'] || keys['arrowup']) dy -= 1;
     if (keys['s'] || keys['arrowdown']) dy += 1;
@@ -687,11 +956,10 @@
 
     if (dx !== 0 || dy !== 0) {
       const len = Math.hypot(dx, dy);
-      player.x += (dx / len) * player.speed;
-      player.y += (dy / len) * player.speed;
+      player.x += (dx / len) * curSpeed;
+      player.y += (dy / len) * curSpeed;
       player.facing = { x: dx / len, y: dy / len };
 
-      // 玩家殘影軌跡 (精緻視覺)
       if (Math.random() > 0.4) {
         player.trail.push({ x: player.x, y: player.y, alpha: 0.6 });
       }
@@ -700,78 +968,156 @@
     player.x = Math.max(player.r, Math.min(canvas.width - player.r, player.x));
     player.y = Math.max(player.r, Math.min(canvas.height - player.r, player.y));
 
-    // 玩家殘影淡出
     player.trail.forEach(t => t.alpha -= 0.05);
     player.trail = player.trail.filter(t => t.alpha > 0);
 
     if (player.attackTimer > 0) player.attackTimer--;
     if (player.attackCooldown > 0) player.attackCooldown--;
 
-    // 魔物邏輯
-    enemies.forEach((en, idx) => {
-      const angle = Math.atan2(player.y - en.y, player.x - en.x);
-      en.x += Math.cos(angle) * en.speed;
-      en.y += Math.sin(angle) * en.speed;
-
-      if (Math.hypot(player.x - en.x, player.y - en.y) < player.r + en.r) {
-        player.hp -= 0.35;
-        updateHUD();
-        if (player.hp <= 0) triggerGameOver();
-      }
-
-      if (en.hp <= 0) {
-        createExplosion(en.x, en.y, en.type === 'slime' ? '#f43f5e' : '#a855f7', 14);
-        kills++;
-        player.exp += 25;
-        checkLevelUp();
-        enemies.splice(idx, 1);
-        setTimeout(() => spawnEnemy(Math.random() > 0.5 ? 'slime' : 'drone'), 1500);
+    // 拾取地面道具檢測
+    droppedItems.forEach((it, idx) => {
+      it.life--;
+      if (Math.hypot(player.x - it.x, player.y - it.y) < player.r + it.r) {
+        inventory[it.type]++;
+        Sound.itemPickup();
+        spawnText(it.x, it.y, `+1 ${it.icon}`, it.color);
+        showToast(`🎉 拾獲道具：${it.icon} 已存入特工背包！`);
+        updateInventoryHUD();
+        droppedItems.splice(idx, 1);
       }
     });
+    droppedItems = droppedItems.filter(it => it.life > 0);
 
-    particles.forEach(p => {
-      p.x += p.vx; p.y += p.vy; p.life--;
-    });
+    // 小怪邏輯
+    if (gameState === 'PLAY') {
+      enemies.forEach((en, idx) => {
+        const angle = Math.atan2(player.y - en.y, player.x - en.x);
+        en.x += Math.cos(angle) * en.speed;
+        en.y += Math.sin(angle) * en.speed;
+
+        if (Math.hypot(player.x - en.x, player.y - en.y) < player.r + en.r) {
+          if (buffTimers.shield > 0) {
+            buffTimers.shield = 0;
+            updateInventoryHUD();
+            showToast('🛡️ 誠信護盾阻擋了一次魔物撞擊！');
+            en.x -= Math.cos(angle) * 30;
+            en.y -= Math.sin(angle) * 30;
+          } else {
+            player.hp -= 0.35;
+            updateHUD();
+            if (player.hp <= 0) triggerGameOver();
+          }
+        }
+
+        if (en.hp <= 0) {
+          createExplosion(en.x, en.y, en.type === 'slime' ? '#f43f5e' : '#a855f7', 14);
+          kills++;
+          player.exp += 25;
+          checkLevelUp();
+
+          // 擊殺 45% 機率掉落道具
+          if (Math.random() < 0.45) dropRandomItem(en.x, en.y);
+
+          enemies.splice(idx, 1);
+          setTimeout(() => spawnEnemy(Math.random() > 0.5 ? 'slime' : 'drone'), 1500);
+        }
+      });
+    }
+
+    // Boss 戰邏輯
+    if (gameState === 'BOSS_BATTLE') {
+      boss.angle += 0.03;
+      const bAngle = Math.atan2(player.y - boss.y, player.x - boss.x);
+      boss.x += Math.cos(bAngle) * boss.speed;
+      boss.y += Math.sin(bAngle) * boss.speed;
+
+      if (Math.hypot(player.x - boss.x, player.y - boss.y) < player.r + boss.r) {
+        if (buffTimers.shield > 0) {
+          buffTimers.shield = 0;
+          updateInventoryHUD();
+          showToast('🛡️ 誠信護盾格擋了巨獸的碾壓！');
+        } else {
+          player.hp -= 0.5;
+          updateHUD();
+          if (player.hp <= 0) triggerGameOver();
+        }
+      }
+
+      boss.shootCooldown++;
+      if (boss.shootCooldown > 75) {
+        boss.shootCooldown = 0;
+        Sound.bossShoot();
+        for (let i = -1; i <= 1; i++) {
+          const spread = bAngle + (i * 0.32);
+          bossProjectiles.push({
+            x: boss.x,
+            y: boss.y,
+            vx: Math.cos(spread) * (buffTimers.lens > 0 ? 1.8 : 3.5),
+            vy: Math.sin(spread) * (buffTimers.lens > 0 ? 1.8 : 3.5),
+            life: 140
+          });
+        }
+      }
+
+      bossProjectiles.forEach((p, pIdx) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life--;
+
+        if (Math.hypot(player.x - p.x, player.y - p.y) < player.r + 7) {
+          if (buffTimers.shield > 0) {
+            buffTimers.shield = 0;
+            updateInventoryHUD();
+            showToast('🛡️ 誠信護盾化解了偽造子彈！');
+            bossProjectiles.splice(pIdx, 1);
+          } else {
+            player.hp -= 12;
+            screenShake = 6;
+            Sound.hit();
+            createExplosion(p.x, p.y, '#f43f5e', 8);
+            bossProjectiles.splice(pIdx, 1);
+            updateHUD();
+            if (player.hp <= 0) triggerGameOver();
+          }
+        }
+      });
+      bossProjectiles = bossProjectiles.filter(p => p.life > 0);
+    }
+
+    particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.life--; });
     particles = particles.filter(p => p.life > 0);
 
-    floatingTexts.forEach(f => {
-      f.y -= 0.8; f.life--;
-    });
+    floatingTexts.forEach(f => { f.y -= 0.8; f.life--; });
     floatingTexts = floatingTexts.filter(f => f.life > 0);
 
     updateHUD();
   }
 
-  // 渲染畫布 (精美特效層次)
+  // 渲染畫布
   function draw() {
     ctx.save();
-
-    // 螢幕震動特效
     if (screenShake > 0) {
       const sx = (Math.random() - 0.5) * screenShake * 2;
       const sy = (Math.random() - 0.5) * screenShake * 2;
       ctx.translate(sx, sy);
     }
-
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 1. 深度漸層背景
+    // 1. 深邃空間背景
     const bgGrad = ctx.createRadialGradient(480, 300, 50, 480, 300, 550);
-    bgGrad.addColorStop(0, '#0a1329');
+    bgGrad.addColorStop(0, gameState === 'BOSS_BATTLE' ? '#1c0a1a' : '#0a1329');
     bgGrad.addColorStop(1, '#030712');
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // 2. 星空粒子
-    ctx.fillStyle = 'rgba(0, 240, 255, 0.4)';
+    ctx.fillStyle = gameState === 'BOSS_BATTLE' ? 'rgba(244, 63, 94, 0.4)' : 'rgba(0, 240, 255, 0.4)';
     stars.forEach(s => {
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2); ctx.fill();
     });
 
-    // 3. 賽博霓虹網格 (具備微光透視)
-    ctx.strokeStyle = 'rgba(0, 240, 255, 0.06)';
+    // 3. 賽博網格
+    ctx.strokeStyle = gameState === 'BOSS_BATTLE' ? 'rgba(244, 63, 94, 0.08)' : 'rgba(0, 240, 255, 0.06)';
     ctx.lineWidth = 1;
     for (let x = 0; x < canvas.width; x += 40) {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
@@ -780,198 +1126,222 @@
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
     }
 
-    // 4. 繪製終端 (全息能量星環)
-    terminals.forEach(term => {
+    // 4. 全息事實查核透鏡掃描波特效 (Lens Radar Effect)
+    if (buffTimers.lens > 0) {
       ctx.save();
-      ctx.translate(term.x, term.y);
+      const sweepY = (gameTime * 140) % canvas.height;
+      const sweepGrad = ctx.createLinearGradient(0, sweepY - 30, 0, sweepY);
+      sweepGrad.addColorStop(0, 'transparent');
+      sweepGrad.addColorStop(1, 'rgba(0, 240, 255, 0.22)');
+      ctx.fillStyle = sweepGrad;
+      ctx.fillRect(0, sweepY - 30, canvas.width, 30);
 
-      // 動態能量旋轉環
-      ctx.save();
-      ctx.rotate(gameTime * 0.8);
-      ctx.strokeStyle = term.solved ? 'rgba(16, 185, 129, 0.4)' : 'rgba(251, 191, 36, 0.4)';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([8, 8]);
+      ctx.strokeStyle = '#00f0ff';
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.arc(0, 0, 42, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
-
-      // 底盤全息光芒
-      const tGrad = ctx.createRadialGradient(0, 0, 5, 0, 0, 38);
-      tGrad.addColorStop(0, term.solved ? 'rgba(16, 185, 129, 0.3)' : 'rgba(251, 191, 36, 0.25)');
-      tGrad.addColorStop(1, 'transparent');
-      ctx.fillStyle = tGrad;
-      ctx.beginPath();
-      ctx.arc(0, 0, 38, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 核心六角基座
-      ctx.fillStyle = '#0f172a';
-      ctx.strokeStyle = term.solved ? '#10b981' : '#fbbf24';
-      ctx.lineWidth = 2;
-      drawHexagon(ctx, 0, 0, 20);
-      ctx.fill();
-      ctx.stroke();
-
-      // 核心圖示
-      ctx.fillStyle = term.solved ? '#10b981' : '#fbbf24';
-      ctx.font = 'bold 15px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(term.solved ? '✓' : '⚡', 0, 0);
-
-      if (!term.solved) {
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 10px sans-serif';
-        ctx.fillText('按 [E] 查核', 0, 32);
-      }
-      ctx.restore();
-    });
-
-    // 5. 繪製精美敵人
-    enemies.forEach(en => {
-      ctx.save();
-      ctx.translate(en.x, en.y);
-
-      if (en.type === 'slime') {
-        // 幻覺史萊姆：液態呼吸變形
-        const wobble = Math.sin(gameTime * 4 + en.x) * 2.5;
-        ctx.fillStyle = '#f43f5e';
-        ctx.shadowColor = '#f43f5e';
-        ctx.shadowBlur = 12;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, en.r + wobble, en.r - wobble, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 核心偽造資訊符號
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = '#ffe4e6';
-        ctx.font = 'bold 11px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('假', 0, 0);
-      } else {
-        // 偏見無人機：旋轉掃描光束與三角外殼
-        ctx.save();
-        ctx.rotate(gameTime * 3);
-        ctx.strokeStyle = 'rgba(168, 85, 247, 0.35)';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(0, 0, en.r + 8, 0, Math.PI / 2);
-        ctx.stroke();
-        ctx.restore();
-
-        ctx.fillStyle = '#a855f7';
-        ctx.shadowColor = '#a855f7';
-        ctx.shadowBlur = 12;
-        ctx.beginPath();
-        ctx.moveTo(0, -en.r);
-        ctx.lineTo(en.r, en.r * 0.8);
-        ctx.lineTo(-en.r, en.r * 0.8);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 9px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('BIAS', 0, 4);
-      }
-
-      // 血條
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      ctx.fillRect(-16, -en.r - 12, 32, 4);
-      ctx.fillStyle = '#f43f5e';
-      ctx.fillRect(-16, -en.r - 12, (en.hp / en.maxHp) * 32, 4);
-      ctx.restore();
-    });
-
-    // 6. 玩家殘影
-    player.trail.forEach(t => {
-      ctx.save();
-      ctx.fillStyle = `rgba(0, 240, 255, ${t.alpha * 0.35})`;
-      ctx.beginPath();
-      ctx.arc(t.x, t.y, player.r * 0.9, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    });
-
-    // 7. 攻擊光刃揮舞弧度 (高階漸層粒子斬擊)
-    if (player.attackTimer > 0) {
-      ctx.save();
-      const angle = Math.atan2(player.facing.y, player.facing.x);
-      const arcGrad = ctx.createLinearGradient(
-        player.x, player.y,
-        player.x + player.facing.x * 50,
-        player.y + player.facing.y * 50
-      );
-      arcGrad.addColorStop(0, 'rgba(0, 240, 255, 0.1)');
-      arcGrad.addColorStop(1, '#00f0ff');
-
-      ctx.strokeStyle = arcGrad;
-      ctx.lineWidth = 7;
-      ctx.shadowColor = '#00f0ff';
-      ctx.shadowBlur = 18;
-      ctx.beginPath();
-      ctx.arc(player.x, player.y, 48, angle - Math.PI / 2.8, angle + Math.PI / 2.8);
+      ctx.moveTo(0, sweepY); ctx.lineTo(canvas.width, sweepY);
       ctx.stroke();
       ctx.restore();
     }
 
-    // 8. 玩家本體特工 (具備能量機甲與光錐)
+    // 5. 繪製終端
+    if (gameState === 'PLAY' || gameState === 'QUIZ') {
+      terminals.forEach(term => {
+        ctx.save();
+        ctx.translate(term.x, term.y);
+
+        ctx.save();
+        ctx.rotate(gameTime * 0.8);
+        ctx.strokeStyle = term.solved ? 'rgba(16, 185, 129, 0.4)' : 'rgba(251, 191, 36, 0.4)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 8]);
+        ctx.beginPath();
+        ctx.arc(0, 0, 40, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.fillStyle = '#0f172a';
+        ctx.strokeStyle = term.solved ? '#10b981' : '#fbbf24';
+        ctx.lineWidth = 2;
+        drawHexagon(ctx, 0, 0, 20);
+        ctx.fill(); ctx.stroke();
+
+        ctx.fillStyle = term.solved ? '#10b981' : '#fbbf24';
+        ctx.font = 'bold 15px sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(term.solved ? '✓' : '⚡', 0, 0);
+        ctx.restore();
+      });
+    }
+
+    // 6. 繪製地面掉落道具
+    droppedItems.forEach(it => {
+      ctx.save();
+      ctx.translate(it.x, it.y);
+
+      // 旋轉微光
+      ctx.save();
+      ctx.rotate(gameTime * 2);
+      ctx.strokeStyle = it.color;
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-12, -12, 24, 24);
+      ctx.restore();
+
+      ctx.font = '16px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(it.icon, 0, 0);
+      ctx.restore();
+    });
+
+    // 7. 繪製小怪
+    if (gameState === 'PLAY') {
+      enemies.forEach(en => {
+        ctx.save();
+        ctx.translate(en.x, en.y);
+        ctx.fillStyle = en.type === 'slime' ? '#f43f5e' : '#a855f7';
+        ctx.shadowColor = ctx.fillStyle;
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(0, 0, en.r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 若透鏡生效，標出「弱點光圈」
+        if (buffTimers.lens > 0) {
+          ctx.strokeStyle = '#fbbf24';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(0, 0, en.r + 6, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.fillStyle = '#fbbf24';
+          ctx.font = 'bold 9px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('CRIT!', 0, -en.r - 8);
+        }
+        ctx.restore();
+      });
+    }
+
+    // 8. 繪製 Boss
+    if (gameState === 'BOSS_BATTLE' || gameState === 'BOSS_ENTERING') {
+      ctx.save();
+      ctx.translate(boss.x, boss.y);
+
+      ctx.save();
+      ctx.rotate(-boss.angle * 1.5);
+      ctx.strokeStyle = '#e11d48';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([12, 12]);
+      ctx.shadowColor = '#e11d48';
+      ctx.shadowBlur = 16;
+      ctx.beginPath();
+      ctx.arc(0, 0, boss.r + 16, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = '#1e0513';
+      ctx.strokeStyle = '#f43f5e';
+      ctx.lineWidth = 3;
+      ctx.shadowColor = '#f43f5e';
+      ctx.shadowBlur = 20;
+      drawOctagon(ctx, 0, 0, boss.r);
+      ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle = '#ff0055';
+      ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI * 2); ctx.fill();
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('OUTSOURCE', 0, 0);
+
+      // 透鏡瞄準 Boss 弱點
+      if (buffTimers.lens > 0) {
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, boss.r + 24, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      bossProjectiles.forEach(p => {
+        ctx.save();
+        ctx.fillStyle = '#fb7185';
+        ctx.shadowColor = '#f43f5e';
+        ctx.shadowBlur = 10;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      });
+    }
+
+    // 9. 玩家殘影
+    player.trail.forEach(t => {
+      ctx.save();
+      ctx.fillStyle = `rgba(0, 240, 255, ${t.alpha * 0.3})`;
+      ctx.beginPath(); ctx.arc(t.x, t.y, player.r, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    });
+
+    // 10. 斬擊特效 (支援提示詞增幅拓寬)
+    if (player.attackTimer > 0) {
+      ctx.save();
+      const angle = Math.atan2(player.facing.y, player.facing.x);
+      const isPromptBoost = buffTimers.prompt > 0;
+      const reach = isPromptBoost ? 68 : 48;
+
+      ctx.strokeStyle = isPromptBoost ? '#a855f7' : '#00f0ff';
+      ctx.lineWidth = isPromptBoost ? 10 : 7;
+      ctx.shadowColor = ctx.strokeStyle;
+      ctx.shadowBlur = 20;
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, reach, angle - Math.PI / 2.8, angle + Math.PI / 2.8);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 11. 玩家特工本體 + 誠信護盾光環
     ctx.save();
     ctx.translate(player.x, player.y);
 
-    // 視向探測光錐
-    const faceAngle = Math.atan2(player.facing.y, player.facing.x);
-    const coneGrad = ctx.createRadialGradient(0, 0, 10, 0, 0, 70);
-    coneGrad.addColorStop(0, 'rgba(0, 240, 255, 0.22)');
-    coneGrad.addColorStop(1, 'transparent');
-    ctx.fillStyle = coneGrad;
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.arc(0, 0, 70, faceAngle - 0.4, faceAngle + 0.4);
-    ctx.closePath();
-    ctx.fill();
+    // 若誠信護盾生效，繪製金色外圍護盾
+    if (buffTimers.shield > 0) {
+      ctx.save();
+      ctx.rotate(gameTime * 2);
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 3;
+      ctx.shadowColor = '#fbbf24';
+      ctx.shadowBlur = 16;
+      drawOctagon(ctx, 0, 0, player.r + 10);
+      ctx.stroke();
+      ctx.restore();
+    }
 
-    // 外骨骼護甲
     ctx.fillStyle = '#0f172a';
     ctx.strokeStyle = '#00f0ff';
     ctx.lineWidth = 2.5;
     ctx.shadowColor = '#00f0ff';
-    ctx.shadowBlur = 15;
-    ctx.beginPath();
-    ctx.arc(0, 0, player.r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+    ctx.shadowBlur = 14;
+    ctx.beginPath(); ctx.arc(0, 0, player.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 
-    // 核心胸燈
     ctx.fillStyle = '#00f0ff';
-    ctx.beginPath();
-    ctx.arc(0, 0, 6, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI * 2); ctx.fill();
 
-    // 視線瞄準眼
     ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(player.facing.x * 11, player.facing.y * 11, 4, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(player.facing.x * 11, player.facing.y * 11, 4, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
 
-    // 9. 爆炸粒子
+    // 12. 粒子與飄字
     particles.forEach(p => {
       ctx.save();
       ctx.fillStyle = p.color;
       ctx.shadowColor = p.color;
       ctx.shadowBlur = 6;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     });
 
-    // 10. 飄動傷害文字
     floatingTexts.forEach(f => {
       ctx.save();
       ctx.font = 'bold 15px sans-serif';
@@ -982,12 +1352,9 @@
       ctx.restore();
     });
 
-    // 11. 結算畫面
-    if (gameState === 'WIN') {
-      drawCertificateScreen();
-    } else if (gameState === 'OVER') {
-      drawFailScreen();
-    }
+    // 13. 結算畫面
+    if (gameState === 'WIN') drawCertificateScreen();
+    else if (gameState === 'OVER') drawFailScreen();
 
     ctx.restore();
   }
@@ -996,15 +1363,20 @@
     c.beginPath();
     for (let i = 0; i < 6; i++) {
       const a = (Math.PI / 3) * i;
-      const hx = x + r * Math.cos(a);
-      const hy = y + r * Math.sin(a);
-      if (i === 0) c.moveTo(hx, hy);
-      else c.lineTo(hx, hy);
+      c.lineTo(x + r * Math.cos(a), y + r * Math.sin(a));
     }
     c.closePath();
   }
 
-  // 通關榮譽認證屏幕
+  function drawOctagon(c, x, y, r) {
+    c.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const a = (Math.PI / 4) * i;
+      c.lineTo(x + r * Math.cos(a), y + r * Math.sin(a));
+    }
+    c.closePath();
+  }
+
   function drawCertificateScreen() {
     ctx.fillStyle = 'rgba(3, 7, 18, 0.96)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1027,18 +1399,17 @@
 
     ctx.fillStyle = '#fbbf24';
     ctx.font = 'bold 30px sans-serif';
-    ctx.fillText('🎖️ AI 特工數字素養認證 🎖️', canvas.width / 2, 145);
+    ctx.fillText('🌟 破除思維外判 • 數字素養特工認證 🌟', canvas.width / 2, 145);
 
     ctx.fillStyle = '#fff';
     ctx.font = '15px sans-serif';
-    ctx.fillText(`茲證明 學生成功於【${diffConfig[currentDifficulty].desc}】通過 3 大核心終端實戰考驗`, canvas.width / 2, 195);
+    ctx.fillText(`茲證明 學生成功於【${diffConfig[currentDifficulty].desc}】熟練運用查核道具殲滅思維外判巨獸`, canvas.width / 2, 195);
 
     ctx.fillStyle = '#94a3b8';
     ctx.font = '13px sans-serif';
-    ctx.fillText('具備「事實查核（破除幻覺）」、「高階提示詞建構」及「恪守學術誠信」之核心素養，', canvas.width / 2, 230);
-    ctx.fillText('成功驅逐虛假資訊與偏見算法，展現「科技向善」精神！', canvas.width / 2, 255);
+    ctx.fillText('展現「主動事實查核」、「提示詞高階構建」及「恪守學術誠信」之全面數字素養，', canvas.width / 2, 230);
+    ctx.fillText('成功擺脫「高技術低思維」陷阱，體現科技向善之真諦！', canvas.width / 2, 255);
 
-    // 數據統計條
     ctx.fillStyle = 'rgba(0, 240, 255, 0.08)';
     ctx.fillRect(canvas.width / 2 - 200, 290, 400, 50);
     ctx.strokeStyle = 'rgba(0, 240, 255, 0.3)';
@@ -1046,9 +1417,8 @@
 
     ctx.fillStyle = '#00f0ff';
     ctx.font = 'bold 15px sans-serif';
-    ctx.fillText(`最終等級: LV.${player.lvl} | 殲滅魔物: ${kills} 隻 | 剩餘防護: ${Math.round(player.hp)} HP`, canvas.width / 2, 322);
+    ctx.fillText(`最終等級: LV.${player.lvl} | 剩餘防護: ${Math.round(player.hp)} HP | 巨獸已淨化`, canvas.width / 2, 322);
 
-    // 簽章區域
     ctx.fillStyle = '#64748b';
     ctx.font = 'bold 13px sans-serif';
     ctx.fillText('策劃設計人：', canvas.width / 2 - 130, 420);
@@ -1074,10 +1444,10 @@
     ctx.textAlign = 'center';
     ctx.fillStyle = '#f43f5e';
     ctx.font = 'bold 26px sans-serif';
-    ctx.fillText('⚠️ 特工批判防線瓦解', canvas.width / 2, canvas.height / 2 - 30);
+    ctx.fillText('⚠️ 特工認知防線失守', canvas.width / 2, canvas.height / 2 - 30);
     ctx.fillStyle = '#cbd5e1';
     ctx.font = '14px sans-serif';
-    ctx.fillText('思維已被「AI 幻覺與偏見」全面侵蝕。請牢記：切勿盲信生成結果，務必主動查核！', canvas.width / 2, canvas.height / 2 + 10);
+    ctx.fillText('自主思考已被「思維外判巨獸」完全吞噬！記得善用【事實查核透鏡 [1]】克敵制勝！', canvas.width / 2, canvas.height / 2 + 10);
     ctx.fillStyle = '#00f0ff';
     ctx.font = '12px sans-serif';
     ctx.fillText('點擊螢幕重新整裝出發', canvas.width / 2, canvas.height / 2 + 60);
@@ -1087,9 +1457,11 @@
     if (gameState === 'WIN' || gameState === 'OVER') location.reload();
   });
 
-  // 觸控虛擬搖桿 (iPad / 手機相容)
+  // 移動端觸控支援
   if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
     document.getElementById('touch-bar').style.display = 'flex';
+    document.getElementById('dpad').style.display = 'block';
+
     const dpad = document.getElementById('dpad');
     const stick = document.getElementById('dpad-stick');
     let touchId = null;
