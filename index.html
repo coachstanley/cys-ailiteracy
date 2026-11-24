@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 守護特工：代號「科技向善」 | 中學生 AI 素養挑戰</title>
+  <style>
+    :root {
+      --bg-color: #0b111e;
+      --card-bg: rgba(22, 33, 54, 0.9);
+      --primary: #00f0ff;
+      --secondary: #7000ff;
+      --accent: #ff007b;
+      --success: #00ffaa;
+      --warning: #ffb700;
+      --text-main: #f0f4ff;
+      --text-muted: #8c9cb8;
+      --border-color: rgba(0, 240, 255, 0.25);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang HK", "Microsoft JhengHei", sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(112, 0, 255, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(0, 240, 255, 0.12) 0%, transparent 40%);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 760px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 240, 255, 0.1);
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 20px;
+      background: rgba(10, 18, 30, 0.85);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .title-area h1 {
+      font-size: 1.25rem;
+      color: var(--primary);
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge-bar {
+      display: flex;
+      gap: 10px;
+      font-size: 0.85rem;
+    }
+
+    .status-pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 6px 12px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .progress-bar-bg {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      width: 100%;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--secondary), var(--primary));
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+
+    main {
+      padding: 28px 24px;
+      flex: 1;
+    }
+
+    .scenario-card {
+      background: rgba(11, 20, 38, 0.7);
+      border-left: 4px solid var(--primary);
+      padding: 18px;
+      border-radius: 8px;
+      margin-bottom: 22px;
+      line-height: 1.6;
+    }
+
+    .scenario-tag {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      color: var(--primary);
+      font-weight: bold;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .scenario-text {
+      font-size: 1.05rem;
+      color: var(--text-main);
+    }
+
+    .prompt-box {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px dashed var(--border-color);
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-size: 0.92rem;
+      color: #b0c2de;
+      font-style: italic;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .option-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 16px;
+      border-radius: 10px;
+      color: var(--text-main);
+      font-size: 0.98rem;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      line-height: 1.45;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      background: rgba(0, 240, 255, 0.1);
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+
+    .option-btn.selected-correct {
+      background: rgba(0, 255, 170, 0.15);
+      border-color: var(--success);
+      color: var(--success);
+    }
+
+    .option-btn.selected-wrong {
+      background: rgba(255, 0, 123, 0.15);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .opt-index {
+      font-weight: bold;
+      color: var(--primary);
+      min-width: 24px;
+    }
+
+    .feedback-box {
+      display: none;
+      padding: 16px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .feedback-box.correct {
+      background: rgba(0, 255, 170, 0.12);
+      border: 1px solid var(--success);
+      color: #bffff0;
+    }
+
+    .feedback-box.wrong {
+      background: rgba(255, 0, 123, 0.12);
+      border: 1px solid var(--accent);
+      color: #ffd1e4;
+    }
+
+    .feedback-title {
+      font-weight: bold;
+      font-size: 1rem;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .feedback-body {
+      font-size: 0.92rem;
+      line-height: 1.55;
+    }
+
+    .action-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: #fff;
+      border: none;
+      padding: 14px;
+      font-size: 1.05rem;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+      display: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      box-shadow: 0 4px 15px rgba(0, 240, 255, 0.3);
+    }
+
+    .action-btn:hover {
+      opacity: 0.95;
+      transform: scale(1.01);
+    }
+
+    .summary-card {
+      text-align: center;
+      padding: 20px 10px;
+    }
+
+    .score-badge {
+      display: inline-block;
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin: 10px 0;
+      text-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+    }
+
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    .results-table th, .results-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .results-table th {
+      color: var(--primary);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 8px; }
+      header { padding: 14px; }
+      main { padding: 18px 14px; }
+      .title-area h1 { font-size: 1.05rem; }
+      .scenario-text { font-size: 0.95rem; }
+      .option-btn { font-size: 0.88rem; padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="title-area">
+      <h1>🛡️ AI 守護特工 <span>// 科技向善</span></h1>
+    </div>
+    <div class="badge-bar">
+      <div class="status-pill">關卡: <span id="stage-text">1 / 5</span></div>
+      <div class="status-pill">素養值: <span id="score-text">0</span></div>
+    </div>
+  </header>
+  
+  <div class="progress-bar-bg">
+    <div class="progress-bar-fill" id="progress-bar"></div>
+  </div>
+
+  <main id="game-main">
+    <div class="scenario-card">
+      <div class="scenario-tag" id="scenario-tag">TASK 01 // 幻覺查核</div>
+      <div class="scenario-text" id="scenario-text">題目載入中...</div>
+      <div class="prompt-box" id="prompt-box" style="display: none;"></div>
+    </div>
+
+    <div class="options-grid" id="options-container"></div>
+
+    <div class="feedback-box" id="feedback-box">
+      <div class="feedback-title" id="feedback-title"></div>
+      <div class="feedback-body" id="feedback-body"></div>
+    </div>
+
+    <button class="action-btn" id="next-btn">進入下一挑戰 ➔</button>
+  </main>
+</div>
+
+<script>
+  const questions = [
+    {
+      stage: "關卡 1",
+      tag: "避免思維外判 // 事實查證能力",
+      text: "你在準備歷史科專題報告時，要求生成式 AI 整理「香港戰後工商業發展」。AI 輸出中提到：『1953年石硤尾大火後，港府成立了高科技晶片研發中心援助災民。』並列出了一篇看似真實的論文《香港工業史1954》。你身為特工，應如何處理？",
+      prompt: "AI 輸出：『1953年港府成立高科技晶片研發中心，出處：香港工業年鑑p.42』",
+      options: [
+        { text: "直接引用！AI 既然連文獻出處與頁碼都列出來了，內容必定無誤，能省下翻書時間。", correct: false, score: 0 },
+        { text: "進行多方事實查核（Fact-check），核對政府檔案處或教科書，發現該年代根本未有晶片產業，此為典型的「AI 幻覺（Hallucination）」。", correct: true, score: 20 },
+        { text: "重新問 AI 一次：「你肯定嗎？」，如果 AI 再次回答「肯定」，便直接當作歷史事實採用。", correct: false, score: 0 }
+      ],
+      feedback: "【藍圖關鍵點】：切勿「思維外判」！生成式 AI 是基於概率生成文字，常會捏造極逼真的假出處（幻覺）。學生必須擔任最後的把關者，親自進行交叉驗證。"
+    },
+    {
+      stage: "關卡 2",
+      tag: "人機協同溝通 // 提示詞工程思維",
+      text: "你想利用 AI 幫忙構思一個初中「社區長者防騙宣傳計劃」。教育局倡導避免「高技術低思維」（只拋出簡短問題讓 AI 包辦），哪一種提示詞（Prompt）最具人機協同價值？",
+      prompt: "目標：激發自主創意，並讓 AI 擔任批判性教練。",
+      options: [
+        { text: "「寫一份 800 字宣傳計劃書給我交功課，要拿高分。」", correct: false, score: 0 },
+        { text: "「你是一位資深社工。請根據香港常見的電話騙案手法，先向我提出 3 個引導性問題以啟發我的思路；在我回答後，再針對活動的可行性給予改進建議。」", correct: true, score: 20 },
+        { text: "「請幫我搜尋網上所有學校做過的防騙計劃，然後重組一份不被發現抄襲的成品。」", correct: false, score: 0 }
+      ],
+      feedback: "【藍圖關鍵點】：實踐「人機協同、適時適用」。高階素養並非依賴 AI 代寫，而是透過精準設定「角色、任務、分步引導、反思驗證」，讓 AI 成為協同思維的催化劑。"
+    },
+    {
+      stage: "關卡 3",
+      tag: "基本運作原理 // 算法與數據偏見",
+      text: "學校資訊科技學會研發了一個「AI 面試篩選模型」，用以預測領袖生候選人。然而測試時發現，系統推薦名單中男生比例高達 85%。經過排查，演算法本身沒有性別過濾代碼，最有可能的底層原因是甚麼？",
+      prompt: "機器學習工作流程：訓練數據 ➔ 模型訓練 ➔ 預測輸出",
+      options: [
+        { text: "AI 擁有自主超自然意識，懂得重男輕女的性別偏見。", correct: false, score: 0 },
+        { text: "過去十年的歷史訓練數據中，領袖生申請者與獲選者多為男生，模型從數據中學習並放大了歷史偏差（Garbage In, Bias Out）。", correct: true, score: 20 },
+        { text: "伺服器計算能力不足（算力不夠），只要升級顯示卡（GPU）就能自動消除偏差。", correct: false, score: 0 }
+      ],
+      feedback: "【藍圖關鍵點】：學生需理解「數據、算法與算力」的關係。AI 的決策取決於訓練數據的品質與代表性。理解演算法偏見是未來評估各類科技工具的重要素養。"
+    },
+    {
+      stage: "關卡 4",
+      tag: "資訊真確性 // 深偽技術與網絡防護",
+      text: "晚上班級 WhatsApp 群組突然流傳一段「校長演講音頻」，語氣極其逼真，聲稱「因天氣炎熱，明天全體同學免穿校服、測驗全數取消」，部分同學準備在社交平台瘋傳。你應該？",
+      prompt: "潛在風險：音頻深偽（Deepfake Audio）模仿技術",
+      options: [
+        { text: "立刻轉發至學校討論區及個人 Instagram 限時動態，讓更多同學及早做好狂歡準備。", correct: false, score: 0 },
+        { text: "保持慎思明辨，先登入學校內聯網（eClass/網頁）確認有無正式通告，並提醒群組同學現今深偽技術極易仿聲，勿擴散未證實訊息。", correct: true, score: 20 },
+        { text: "用耳機放大音量聽，只要聽不到明顯機械雜音，就足以證明是校長真人原聲。", correct: false, score: 0 }
+      ],
+      feedback: "【藍圖關鍵點】：「眼見未為真，耳聽需查證」。在生成式 AI 普及時代，偽造影音成本極低。學生應具備審查媒體來源的警覺心，恪守數字公民道德，不傳謠、不助長虛假資訊。"
+    },
+    {
+      stage: "關卡 5",
+      tag: "科技向善與倫理 // 學術誠信與版權規範",
+      text: "在完成高級程度的專題研習時，你運用 AI 協助翻譯海外文獻，並由 AI 潤色了你的引言段落。呈交作業時，符合教育局《應用 AI 指南》與學術誠信的做法是？",
+      prompt: "原則：誠信透明、合規守法、尊重知識產權",
+      options: [
+        { text: "隱瞞不報。只要段落經過微調，查重系統檢測不出是 AI，就毋須主動交代。", correct: false, score: 0 },
+        { text: "在作業附錄明確列出「AI 協作聲明（AI Disclosure Statement）」，註明使用之工具名稱、提示詞目的及哪些部分經過人類修改與核實。", correct: true, score: 20 },
+        { text: "乾脆把全部報告直接讓 AI 重寫，因為政府藍圖支持教育全面數字化轉型。", correct: false, score: 0 }
+      ],
+      feedback: "【藍圖關鍵點】：秉持「智能向善、學術誠信」！使用 AI 絕非罪過，重點在於「透明度與負責態度」。誠實標註人機協同界限，正是未來數字公民的核心品德。"
+    }
+  ];
+
+  let currentIdx = 0;
+  let totalScore = 0;
+  let answered = false;
+
+  const stageText = document.getElementById("stage-text");
+  const scoreText = document.getElementById("score-text");
+  const progressBar = document.getElementById("progress-bar");
+  const scenarioTag = document.getElementById("scenario-tag");
+  const scenarioText = document.getElementById("scenario-text");
+  const promptBox = document.getElementById("prompt-box");
+  const optionsContainer = document.getElementById("options-container");
+  const feedbackBox = document.getElementById("feedback-box");
+  const feedbackTitle = document.getElementById("feedback-title");
+  const feedbackBody = document.getElementById("feedback-body");
+  const nextBtn = document.getElementById("next-btn");
+  const gameMain = document.getElementById("game-main");
+
+  function renderQuestion(idx) {
+    answered = false;
+    const q = questions[idx];
+    stageText.textContent = `${idx + 1} / ${questions.length}`;
+    scoreText.textContent = totalScore;
+    progressBar.style.width = `${(idx / questions.length) * 100}%`;
+
+    scenarioTag.textContent = `${q.stage} // ${q.tag}`;
+    scenarioText.textContent = q.text;
+    
+    if (q.prompt) {
+      promptBox.style.display = "block";
+      promptBox.textContent = `💡 ${q.prompt}`;
+    } else {
+      promptBox.style.display = "none";
+    }
+
+    optionsContainer.innerHTML = "";
+    feedbackBox.style.display = "none";
+    nextBtn.style.display = "none";
+
+    const labels = ["A", "B", "C"];
+    q.options.forEach((opt, oIdx) => {
+      const btn = document.createElement("button");
+      btn.className = "option-btn";
+      btn.innerHTML = `<span class="opt-index">${labels[oIdx]}</span><span>${opt.text}</span>`;
+      btn.onclick = () => selectOption(oIdx);
+      optionsContainer.appendChild(btn);
+    });
+  }
+
+  function selectOption(oIdx) {
+    if (answered) return;
+    answered = true;
+
+    const q = questions[currentIdx];
+    const selected = q.options[oIdx];
+    const buttons = optionsContainer.querySelectorAll(".option-btn");
+
+    buttons.forEach((btn, index) => {
+      btn.disabled = true;
+      if (q.options[index].correct) {
+        btn.classList.add("selected-correct");
+      } else if (index === oIdx && !selected.correct) {
+        btn.classList.add("selected-wrong");
+      }
+    });
+
+    feedbackBox.style.display = "block";
+    if (selected.correct) {
+      totalScore += selected.score;
+      scoreText.textContent = totalScore;
+      feedbackBox.className = "feedback-box correct";
+      feedbackTitle.innerHTML = "✅ 特工決策正確！素養評分提升！";
+    } else {
+      feedbackBox.className = "feedback-box wrong";
+      feedbackTitle.innerHTML = "⚠️ 警報！墮入 AI 使用陷阱！";
+    }
+    feedbackBody.textContent = q.feedback;
+
+    nextBtn.style.display = "block";
+    if (currentIdx === questions.length - 1) {
+      nextBtn.textContent = "查看特工總結報告 🎓";
+    }
+  }
+
+  nextBtn.onclick = () => {
+    currentIdx++;
+    if (currentIdx < questions.length) {
+      renderQuestion(currentIdx);
+    } else {
+      showSummary();
+    }
+  };
+
+  function showSummary() {
+    progressBar.style.width = "100%";
+    let rank = "";
+    let color = "";
+    if (totalScore >= 100) {
+      rank = "🌟 卓越領航者（Master AI Guardian）";
+      color = "var(--success)";
+    } else if (totalScore >= 60) {
+      rank = "🛡️ 慎思協同者（Qualified AI Agent）";
+      color = "var(--primary)";
+    } else {
+      rank = "⚠️ 易受盲信者（Novice Trainee）";
+      color = "var(--warning)";
+    }
+
+    gameMain.innerHTML = `
+      <div class="summary-card">
+        <h2>🎖️ AI 素養特工訓練完成</h2>
+        <p style="color: var(--text-muted); margin-top: 6px;">參考香港教育局《中小學數字教育發展藍圖》指標評定</p>
+        <div class="score-badge">${totalScore} <span style="font-size: 1.2rem; color: var(--text-muted);">/ 100</span></div>
+        <h3 style="color: ${color}; margin-bottom: 20px;">等級：${rank}</h3>
+
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>學習範疇</th>
+              <th>指標重點</th>
+              <th>特工實踐</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>運作原理</strong></td>
+              <td>數據、算法與算力</td>
+              <td>辨析數據歷史偏見，理解模型局限</td>
+            </tr>
+            <tr>
+              <td><strong>人機溝通</strong></td>
+              <td>提示詞工程</td>
+              <td>分步啟發式引導，拒絕直接複製</td>
+            </tr>
+            <tr>
+              <td><strong>應用反思</strong></td>
+              <td>倫理與批判性思考</td>
+              <td>事實查證、警惕深偽、堅守學術誠信</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <button class="action-btn" style="display:block; margin-top:20px;" onclick="location.reload()">重新挑戰 ⟳</button>
+      </div>
+    `;
+  }
+
+  // 初始化啟動
+  renderQuestion(0);
+</script>
+
+</body>
+</html>
