@@ -3,15 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>AI 覺醒紀元：向善特工 | ARPG 冒險</title>
+  <title>AI 守護特工：向善協同戰 (豪華版) | 明愛元朗陳震夏中學</title>
+  <!-- 
+    ===================================================================
+    遊戲名稱：AI 守護特工：向善協同戰 (Deluxe Edition)
+    策劃設計：明愛元朗陳震夏中學 — 張耀宗副校長
+    研發規格：HTML5 Responsive Canvas Engine + Web Audio Synthesizer
+    學習參照：香港教育局《中小學數字教育發展藍圖》附篇一 AI 素養學習架構
+    ===================================================================
+  -->
   <style>
     :root {
-      --bg: #070b14;
+      --bg: #030712;
       --primary: #00f0ff;
-      --secondary: #bd00ff;
-      --accent: #ff0055;
-      --gold: #ffe600;
-      --panel-bg: rgba(10, 18, 35, 0.88);
+      --secondary: #a855f7;
+      --accent: #f43f5e;
+      --gold: #fbbf24;
+      --panel: rgba(15, 23, 42, 0.88);
     }
     * {
       box-sizing: border-box;
@@ -24,7 +32,7 @@
     body {
       background: var(--bg);
       color: #fff;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang HK", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang HK", "Microsoft JhengHei", sans-serif;
       overflow: hidden;
       width: 100vw;
       height: 100vh;
@@ -43,169 +51,235 @@
       align-items: center;
     }
     canvas {
-      background: #0d1424;
-      border: 1px solid rgba(0, 240, 255, 0.3);
-      border-radius: 8px;
-      box-shadow: 0 0 30px rgba(0, 240, 255, 0.15);
+      background: #060b17;
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      border-radius: 14px;
+      box-shadow: 0 0 50px rgba(0, 240, 255, 0.2);
       width: 100%;
       height: 100%;
       object-fit: contain;
     }
-    /* UI Overlay */
-    .hud {
+    /* HUD Overlays */
+    .hud-top {
       position: absolute;
       top: 14px;
-      left: 16px;
-      right: 16px;
+      left: 18px;
+      right: 18px;
       display: flex;
       justify-content: space-between;
       pointer-events: none;
-      font-size: 0.95rem;
+      z-index: 20;
     }
-    .hud-box {
-      background: var(--panel-bg);
+    .hud-card {
+      background: var(--panel);
       padding: 10px 16px;
-      border-radius: 10px;
+      border-radius: 12px;
       border: 1px solid rgba(0, 240, 255, 0.3);
-      backdrop-filter: blur(8px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
     }
-    .bar-wrap {
+    .school-title {
+      font-size: 0.72rem;
+      color: var(--primary);
+      letter-spacing: 1px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+    .bar-bg {
       width: 140px;
       height: 10px;
-      background: rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.1);
       border-radius: 5px;
       margin-top: 5px;
       overflow: hidden;
+      position: relative;
     }
-    .bar-fill-hp {
+    .bar-hp {
       height: 100%;
       width: 100%;
-      background: linear-gradient(90deg, #ff0055, #00ffaa);
-      transition: width 0.2s ease;
+      background: linear-gradient(90deg, #f43f5e, #10b981);
+      transition: width 0.2s;
     }
-    .bar-fill-exp {
+    .bar-exp {
       height: 100%;
       width: 0%;
-      background: linear-gradient(90deg, #7000ff, #00f0ff);
-      transition: width 0.2s ease;
+      background: linear-gradient(90deg, var(--secondary), var(--primary));
+      transition: width 0.2s;
     }
-    /* Modal Quiz Overlay */
+    .footer-badge {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.72rem;
+      color: rgba(255, 255, 255, 0.45);
+      background: rgba(0, 0, 0, 0.65);
+      padding: 4px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      pointer-events: none;
+      z-index: 20;
+    }
+    /* Difficulty & Start Menu Modal */
+    #start-modal {
+      position: absolute;
+      width: 90%;
+      max-width: 520px;
+      background: var(--panel);
+      border: 2px solid var(--primary);
+      border-radius: 16px;
+      padding: 28px 24px;
+      text-align: center;
+      z-index: 100;
+      box-shadow: 0 0 60px rgba(0, 240, 255, 0.35);
+      backdrop-filter: blur(14px);
+    }
+    #start-modal h2 {
+      font-size: 1.5rem;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+    .difficulty-group {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin: 22px 0;
+    }
+    .diff-btn {
+      padding: 14px 18px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(0,240,255,0.3);
+      border-radius: 10px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.95rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.25s;
+    }
+    .diff-btn:hover {
+      background: rgba(0, 240, 255, 0.18);
+      border-color: var(--primary);
+      transform: scale(1.02);
+    }
+    .diff-btn.selected {
+      background: linear-gradient(90deg, rgba(168,85,247,0.35), rgba(0,240,255,0.35));
+      border-color: var(--primary);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+    }
+    .start-run-btn {
+      width: 100%;
+      padding: 14px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #000;
+      background: var(--primary);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+      transition: opacity 0.2s;
+    }
+    .start-run-btn:hover { opacity: 0.9; }
+
+    /* Interactive Quiz Modal */
     #quiz-modal {
       position: absolute;
       display: none;
       width: 90%;
       max-width: 580px;
-      background: var(--panel-bg);
+      background: var(--panel);
       border: 2px solid var(--primary);
-      box-shadow: 0 0 40px rgba(0, 240, 255, 0.5);
       border-radius: 14px;
       padding: 24px;
       z-index: 100;
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 0 50px rgba(0, 240, 255, 0.4);
     }
-    #quiz-modal h3 {
-      color: var(--primary);
-      margin-bottom: 12px;
-      font-size: 1.15rem;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    #quiz-timer {
+      font-size: 0.85rem;
+      color: var(--accent);
+      font-weight: bold;
+      margin-bottom: 8px;
     }
-    #quiz-modal p {
-      font-size: 0.95rem;
-      line-height: 1.5;
-      color: #dbe7ff;
-      margin-bottom: 18px;
-    }
-    .quiz-opt-btn {
-      display: block;
+    .quiz-btn {
       width: 100%;
-      padding: 12px 14px;
+      padding: 13px 15px;
       margin-bottom: 10px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(0, 240, 255, 0.3);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(0,240,255,0.3);
       color: #fff;
       border-radius: 8px;
       text-align: left;
-      cursor: pointer;
       font-size: 0.92rem;
+      cursor: pointer;
       transition: all 0.2s;
     }
-    .quiz-opt-btn:hover {
+    .quiz-btn:hover {
       background: rgba(0, 240, 255, 0.2);
       border-color: var(--primary);
-      transform: translateX(4px);
+      transform: translateX(5px);
     }
-    /* Mobile Virtual Controls */
-    #touch-controls {
+
+    /* Mobile Controls */
+    #touch-bar {
       display: none;
       position: absolute;
-      bottom: 20px;
-      left: 20px;
-      right: 20px;
+      bottom: 22px;
+      left: 18px;
+      right: 18px;
       justify-content: space-between;
       align-items: flex-end;
       pointer-events: none;
-      z-index: 50;
+      z-index: 40;
     }
-    .touch-btn {
+    .t-btn {
       pointer-events: auto;
-      width: 70px;
-      height: 70px;
+      width: 68px;
+      height: 68px;
       border-radius: 50%;
-      background: rgba(0, 240, 255, 0.15);
+      background: rgba(0, 240, 255, 0.12);
       border: 2px solid var(--primary);
       color: #fff;
       font-weight: bold;
       display: flex;
       justify-content: center;
       align-items: center;
-      box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
-      font-size: 1rem;
-      touch-action: none;
+      font-size: 0.95rem;
     }
-    .touch-btn:active {
-      background: rgba(0, 240, 255, 0.4);
-      transform: scale(0.95);
-    }
+    .t-btn:active { background: rgba(0, 240, 255, 0.4); transform: scale(0.92); }
     #dpad {
       pointer-events: auto;
-      position: relative;
-      width: 130px;
-      height: 130px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 2px dashed rgba(0, 240, 255, 0.3);
+      width: 120px;
+      height: 120px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 2px dashed rgba(0, 240, 255, 0.2);
       border-radius: 50%;
+      position: relative;
     }
     #dpad-stick {
       position: absolute;
-      top: 40px;
-      left: 40px;
-      width: 50px;
-      height: 50px;
+      top: 36px;
+      left: 36px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       background: var(--primary);
       box-shadow: 0 0 15px var(--primary);
     }
-    /* Notification */
     #toast {
       position: absolute;
-      top: 80px;
-      background: rgba(255, 0, 85, 0.85);
+      top: 90px;
+      background: rgba(244, 63, 94, 0.9);
       color: #fff;
-      padding: 8px 18px;
+      padding: 8px 22px;
       border-radius: 20px;
-      font-size: 0.88rem;
+      font-size: 0.9rem;
       font-weight: bold;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
       display: none;
       z-index: 90;
-      animation: pulse 1s infinite alternate;
-    }
-    @keyframes pulse {
-      from { transform: scale(1); }
-      to { transform: scale(1.05); }
+      box-shadow: 0 4px 15px rgba(0,0,0,0.6);
     }
   </style>
 </head>
@@ -214,142 +288,208 @@
 <div id="game-container">
   <canvas id="gameCanvas" width="960" height="600"></canvas>
 
-  <div class="hud">
-    <div class="hud-box">
-      <div>🛡️ 特工生命 (HP)</div>
-      <div class="bar-wrap"><div class="bar-fill-hp" id="hp-bar"></div></div>
-      <div style="font-size: 0.8rem; margin-top: 4px; color: var(--primary);">LV.<span id="lvl-txt">1</span> 思辨力</div>
+  <!-- Top HUD -->
+  <div class="hud-top">
+    <div class="hud-card">
+      <div class="school-title">CARITAS YLCCSS // AI DEFENDER</div>
+      <div style="font-size:0.85rem; font-weight:bold; margin-top:2px;">特工護盾 (HP)</div>
+      <div class="bar-bg"><div class="bar-hp" id="hp-bar"></div></div>
     </div>
-    <div class="hud-box" style="text-align: right;">
-      <div>淨化核心: <span id="core-txt" style="color:var(--gold); font-weight:bold;">0 / 3</span></div>
-      <div class="bar-wrap"><div class="bar-fill-exp" id="exp-bar"></div></div>
-      <div style="font-size: 0.8rem; margin-top: 4px; color:#aaa;">消滅魔物: <span id="kill-txt">0</span></div>
+    <div class="hud-card" style="text-align: right;">
+      <div class="school-title">DESIGNED BY Y.C. CHEUNG</div>
+      <div style="font-size:0.85rem; color:var(--gold); font-weight:bold;">向善終端: <span id="core-txt">0 / 3</span></div>
+      <div class="bar-bg"><div class="bar-exp" id="exp-bar"></div></div>
     </div>
   </div>
 
   <div id="toast">⚠️ 提示訊息</div>
 
+  <!-- Footer Signature -->
+  <div class="footer-badge">
+    明愛元朗陳震夏中學 — 張耀宗副校長 策劃設計 © 2026 CYLCCSS
+  </div>
+
+  <!-- Start & Difficulty Selection Modal -->
+  <div id="start-modal">
+    <div style="font-size: 0.8rem; color: var(--gold); letter-spacing: 1px;">明愛元朗陳震夏中學 • 校本數字教育實踐</div>
+    <h2>AI 守護特工：向善協同戰</h2>
+    <p style="font-size: 0.88rem; color: #94a3b8; margin-top: 6px;">請依據學習階段選擇訓練難度：</p>
+
+    <div class="difficulty-group">
+      <div class="diff-btn selected" onclick="selectDiff('junior', this)">
+        <span>🌱 見習特工 (Junior)</span>
+        <span style="font-size: 0.8rem; color: #10b981;">初中階段 • 探索模式</span>
+      </div>
+      <div class="diff-btn" onclick="selectDiff('standard', this)">
+        <span>🛡️ 向善特工 (Standard)</span>
+        <span style="font-size: 0.8rem; color: var(--primary);">高中常規 • 實戰考驗</span>
+      </div>
+      <div class="diff-btn" onclick="selectDiff('master', this)">
+        <span>🔥 架構大師 (Master)</span>
+        <span style="font-size: 0.8rem; color: var(--accent);">ICT 尖子 • 限時極限</span>
+      </div>
+    </div>
+
+    <button class="start-run-btn" onclick="startGame()">啟動心智網絡特工任務 ➔</button>
+  </div>
+
   <!-- Quiz Modal -->
   <div id="quiz-modal">
-    <h3 id="quiz-title">📡 連接數字倫理終端</h3>
-    <p id="quiz-desc">題目載入中...</p>
+    <div id="quiz-timer"></div>
+    <h3 id="quiz-title" style="color:var(--primary); margin-bottom:8px;">📡 連接終端</h3>
+    <div style="font-size:0.75rem; color:var(--gold); margin-bottom:12px;">依據教育局《中小學數字教育發展藍圖》校本案例研發</div>
+    <p id="quiz-desc" style="font-size:0.95rem; line-height:1.5; color:#dbe7ff; margin-bottom:18px;">題目載入中...</p>
     <div id="quiz-options"></div>
   </div>
 
-  <!-- Mobile Touch Controls -->
-  <div id="touch-controls">
+  <!-- Mobile Touch Bar -->
+  <div id="touch-bar">
     <div id="dpad"><div id="dpad-stick"></div></div>
     <div style="display:flex; gap:14px;">
-      <div class="touch-btn" id="btn-interact" style="background:rgba(255,230,0,0.15); border-color:var(--gold); font-size:0.8rem;">破解 [E]</div>
-      <div class="touch-btn" id="btn-attack">揮刃 [J]</div>
+      <div class="t-btn" id="btn-interact" style="background:rgba(251,191,36,0.15); border-color:var(--gold); font-size:0.8rem;">查核 [E]</div>
+      <div class="t-btn" id="btn-attack">光刃 [J]</div>
     </div>
   </div>
 </div>
 
 <script>
-  // Web Audio Sound FX Synth (無外部檔案依賴)
-  const AudioEngine = {
+  // Web Audio Synthesizer
+  const Sound = {
     ctx: null,
     init() {
       if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
     },
-    playTone(freq, type, duration, slideFreq = null) {
+    play(freq, type, dur, endFreq = null) {
       if (!this.ctx) return;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = type;
       osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-      if (slideFreq) {
-        osc.frequency.exponentialRampToValueAtTime(slideFreq, this.ctx.currentTime + duration);
-      }
+      if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, this.ctx.currentTime + dur);
       gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
       osc.start();
-      osc.stop(this.ctx.currentTime + duration);
+      osc.stop(this.ctx.currentTime + dur);
     },
-    slash() { this.playTone(400, 'sawtooth', 0.12, 120); },
-    hit() { this.playTone(180, 'square', 0.18, 50); },
-    success() { 
-      this.playTone(523, 'sine', 0.1); 
-      setTimeout(() => this.playTone(659, 'sine', 0.1), 100);
-      setTimeout(() => this.playTone(783, 'sine', 0.25), 200);
+    slash() { this.play(520, 'sawtooth', 0.12, 140); },
+    hit() { this.play(160, 'square', 0.15, 60); },
+    win() {
+      [523, 659, 783, 1046].forEach((f, i) => setTimeout(() => this.play(f, 'sine', 0.2), i * 110));
     },
-    error() { this.playTone(150, 'sawtooth', 0.28, 80); }
+    err() { this.play(130, 'sawtooth', 0.3, 70); }
   };
 
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
 
-  // 狀態管理
-  let gameState = 'PLAY'; // 'PLAY' | 'QUIZ' | 'WIN' | 'OVER'
+  let gameState = 'MENU'; // 'MENU' | 'PLAY' | 'QUIZ' | 'WIN' | 'OVER'
+  let currentDifficulty = 'junior';
   let keys = {};
-  let touchMove = { x: 0, y: 0 };
-  let kills = 0;
+  let touchVec = { x: 0, y: 0 };
+  let screenShake = 0;
+  let gameTime = 0;
   let coresFound = 0;
+  let kills = 0;
+
+  // 難度配置
+  const diffConfig = {
+    junior: { hp: 150, monsterSpd: 1.3, penalty: 5, timer: 0, desc: '初階模式' },
+    standard: { hp: 100, monsterSpd: 2.0, penalty: 15, timer: 0, desc: '常規模式' },
+    master: { hp: 80, monsterSpd: 2.6, penalty: 25, timer: 20, desc: '大師限時模式' }
+  };
 
   // 玩家特工
   const player = {
     x: 480,
     y: 300,
     r: 18,
-    speed: 3.8,
+    speed: 4.0,
     hp: 100,
     maxHp: 100,
     exp: 0,
     maxExp: 100,
     lvl: 1,
     facing: { x: 1, y: 0 },
-    isAttacking: false,
     attackTimer: 0,
-    attackCooldown: 0
+    attackCooldown: 0,
+    trail: []
   };
 
-  // 題目資料庫 (扣緊《藍圖》指標)
+  // 數字教育藍圖題庫
   const quizPool = [
     {
-      title: "終端 A // 辨識幻覺陷阱 (Hallucination)",
-      desc: "歷史報告中，AI 捏造了一篇看似權威但根本不存在的香港文獻，稱之為「石硤尾大火高科技研究綱領」。特工應如何打破思維外判？",
+      title: "終端 01 // 破除思維外判 (Anti-Hallucination)",
+      desc: "專題探究時，生成式 AI 聲稱引用了『1955年港府成立晶片支援處』的論文。張副校長提醒學生需慎思明辨，你的第一反應是？",
       options: [
-        { t: "直接複製：AI 生成字句通順且格式完整，不必浪費時間複查。", correct: false },
-        { t: "啟動事實查核：交叉比對官方檔案處歷史紀錄，揪出生成式 AI 概率捏造缺陷。", correct: true },
-        { t: "反覆詢問同一個 AI，直到它發誓自己沒有撒謊為止。", correct: false }
+        { t: "直接複製：文筆流暢且格式完整，可節省翻查時間。", correct: false },
+        { t: "啟動事實查核：交叉比對檔案處及可靠文獻，揪出 AI 幻覺。", correct: true },
+        { t: "連續詰問同一 AI 直到它承認錯誤為止。", correct: false }
       ]
     },
     {
-      title: "終端 B // 破解提示詞迷思 (Prompt Literacy)",
-      desc: "教育局強調人機協同需避免「高技術低思維」（只輸入一句話讓 AI 寫完整篇報告）。何者最具協同價值？",
+      title: "終端 02 // 擺脫高技術低思維 (Prompt Engineering)",
+      desc: "教育局強調人機協同需避免將思考全盤外判。以下哪種提示詞能真正發揮生成式 AI 輔助高階思維的價值？",
       options: [
-        { t: "設定專家角色與背景約束，請 AI 擔任思辨教練提供 3 個反思問題引導自主創作。", correct: true },
-        { t: "指令：『幫我寫完這篇作業，並且要繞過學校所有 AI 偵測軟件。』", correct: false },
-        { t: "完全不使用任何 AI，拒絕了解最新數字教育科技的運作邏輯。", correct: false }
+        { t: "「請擔任學術教練，針對我的研究初稿提出 3 個批判性反思盲點以啟發思考。」", correct: true },
+        { t: "「直接寫一份 1000 字報告給我交功課，並保證能繞過抄襲檢測。」", correct: false },
+        { t: "「列出全港最容易拿滿分的題目，直接給我標準答案。」", correct: false }
       ]
     },
     {
-      title: "終端 C // 演算法偏見與深偽審查",
-      desc: "若學校利用 AI 模型遴選風紀，發現輸出結果對某些背景學生產生系統性偏差，特工應如何向善糾錯？",
+      title: "終端 03 // 捍衛科技向善倫理 (Ethics & Integrity)",
+      desc: "呈交高中專題研習（SBA）時，你運用 AI 潤色了結論段落。符合明愛元朗陳震夏中學及局方指引的誠信做法是？",
       options: [
-        { t: "認定機器絕無偏見，錯的必定是未入選的學生。", correct: false },
-        { t: "審查底層歷史訓練數據是否具代表性，糾正算法放大的人類偏見。", correct: true },
-        { t: "將系統輸出轉發至社交平台發動網絡公審以引起關注。", correct: false }
+        { t: "保持隱瞞：只要沒有逐字照抄，不需交代曾使用 AI 工具。", correct: false },
+        { t: "誠信披露：在附錄填寫『AI 協作聲明』，載明工具、提示詞用途與人類修正紀錄。", correct: true },
+        { t: "全面禁用：因擔心被誤解，所以徹底拒絕使用任何數字科技。", correct: false }
       ]
     }
   ];
 
-  // 倫理終端（在地圖上的據點）
   const terminals = [
-    { x: 180, y: 160, solved: false, quiz: quizPool[0] },
-    { x: 780, y: 160, solved: false, quiz: quizPool[1] },
-    { x: 480, y: 480, solved: false, quiz: quizPool[2] }
+    { x: 190, y: 160, solved: false, quiz: quizPool[0] },
+    { x: 770, y: 160, solved: false, quiz: quizPool[1] },
+    { x: 480, y: 470, solved: false, quiz: quizPool[2] }
   ];
 
-  // 敵人陣列
   let enemies = [];
   let particles = [];
-  let damageTexts = [];
+  let floatingTexts = [];
+  let stars = [];
+
+  // 生成背景流動光子星空
+  for (let i = 0; i < 70; i++) {
+    stars.push({
+      x: Math.random() * 960,
+      y: Math.random() * 600,
+      size: Math.random() * 2 + 0.5,
+      spd: Math.random() * 0.4 + 0.1
+    });
+  }
+
+  function selectDiff(type, btn) {
+    currentDifficulty = type;
+    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  }
+
+  function startGame() {
+    Sound.init();
+    const cfg = diffConfig[currentDifficulty];
+    player.hp = cfg.hp;
+    player.maxHp = cfg.hp;
+    document.getElementById('start-modal').style.display = 'none';
+    gameState = 'PLAY';
+
+    // 初始化魔物
+    enemies = [];
+    for (let i = 0; i < 6; i++) spawnEnemy(i % 2 === 0 ? 'slime' : 'drone');
+  }
 
   function spawnEnemy(type) {
+    const spdMultiplier = diffConfig[currentDifficulty].monsterSpd;
     const edge = Math.floor(Math.random() * 4);
     let x, y;
     if (edge === 0) { x = Math.random() * canvas.width; y = -20; }
@@ -358,18 +498,15 @@
     else { x = -20; y = Math.random() * canvas.height; }
 
     if (type === 'slime') {
-      enemies.push({ x, y, r: 16, hp: 40, speed: 1.6, type: 'slime', color: '#ff007b', name: '幻覺影' });
+      enemies.push({ x, y, r: 18, hp: 45, maxHp: 45, speed: 1.1 * spdMultiplier, type: 'slime', name: '幻覺史萊姆' });
     } else {
-      enemies.push({ x, y, r: 14, hp: 30, speed: 2.2, type: 'drone', color: '#bd00ff', name: '偏見怪' });
+      enemies.push({ x, y, r: 15, hp: 35, maxHp: 35, speed: 1.5 * spdMultiplier, type: 'drone', name: '偏見無人機' });
     }
   }
 
-  // 初始生成怪物
-  for (let i = 0; i < 6; i++) spawnEnemy(i % 2 === 0 ? 'slime' : 'drone');
-
-  // 監聽鍵盤
+  // 鍵盤與互動綁定
   window.addEventListener('keydown', e => {
-    AudioEngine.init();
+    Sound.init();
     keys[e.key.toLowerCase()] = true;
     if (e.key === ' ' || e.key.toLowerCase() === 'j') triggerAttack();
     if (e.key.toLowerCase() === 'e') triggerInteract();
@@ -378,81 +515,70 @@
 
   function triggerAttack() {
     if (gameState !== 'PLAY' || player.attackCooldown > 0) return;
-    player.isAttacking = true;
-    player.attackTimer = 12; // 攻擊持續幀數
-    player.attackCooldown = 18;
-    AudioEngine.slash();
+    player.attackTimer = 14;
+    player.attackCooldown = 20;
+    Sound.slash();
 
-    // 攻擊判定弧度
-    const attackRange = 55;
-    const slashCenter = {
-      x: player.x + player.facing.x * 32,
-      y: player.y + player.facing.y * 32
-    };
-
+    const slashCenter = { x: player.x + player.facing.x * 35, y: player.y + player.facing.y * 35 };
     enemies.forEach(en => {
-      const dist = Math.hypot(en.x - slashCenter.x, en.y - slashCenter.y);
-      if (dist < attackRange) {
-        const dmg = 25 + player.lvl * 5;
+      if (Math.hypot(en.x - slashCenter.x, en.y - slashCenter.y) < 55) {
+        const dmg = 28 + player.lvl * 6;
         en.hp -= dmg;
-        spawnDamageText(en.x, en.y, `-${dmg}`, '#00ffaa');
-        createParticles(en.x, en.y, '#00f0ff', 6);
-        AudioEngine.hit();
-
-        // 擊退
-        en.x += player.facing.x * 20;
-        en.y += player.facing.y * 20;
+        screenShake = 6;
+        Sound.hit();
+        spawnText(en.x, en.y, `-${dmg}`, '#00ffaa');
+        createExplosion(en.x, en.y, '#00f0ff', 10);
+        en.x += player.facing.x * 24;
+        en.y += player.facing.y * 24;
       }
     });
   }
 
   function triggerInteract() {
     if (gameState !== 'PLAY') return;
-    terminals.forEach((term, idx) => {
-      if (!term.solved) {
-        const dist = Math.hypot(player.x - term.x, player.y - term.y);
-        if (dist < 50) {
-          openQuiz(term);
-        }
+    terminals.forEach(term => {
+      if (!term.solved && Math.hypot(player.x - term.x, player.y - term.y) < 50) {
+        openQuiz(term);
       }
     });
   }
 
+  let quizTimerInterval = null;
   function openQuiz(terminal) {
     gameState = 'QUIZ';
     const modal = document.getElementById('quiz-modal');
     const title = document.getElementById('quiz-title');
     const desc = document.getElementById('quiz-desc');
     const opts = document.getElementById('quiz-options');
+    const timerDiv = document.getElementById('quiz-timer');
 
-    title.innerHTML = `📡 ${terminal.quiz.title}`;
+    title.textContent = `📡 ${terminal.quiz.title}`;
     desc.textContent = terminal.quiz.desc;
     opts.innerHTML = '';
 
+    const cfg = diffConfig[currentDifficulty];
+    if (cfg.timer > 0) {
+      let remain = cfg.timer;
+      timerDiv.textContent = `⏱️ 限時倒數：${remain} 秒`;
+      quizTimerInterval = setInterval(() => {
+        remain--;
+        timerDiv.textContent = `⏱️ 限時倒數：${remain} 秒`;
+        if (remain <= 0) {
+          clearInterval(quizTimerInterval);
+          handleQuizAnswer(false, terminal);
+        }
+      }, 1000);
+    } else {
+      timerDiv.textContent = '';
+    }
+
     terminal.quiz.options.forEach(opt => {
       const btn = document.createElement('button');
-      btn.className = 'quiz-opt-btn';
+      btn.className = 'quiz-btn';
       btn.textContent = opt.t;
       btn.onclick = () => {
-        if (opt.correct) {
-          AudioEngine.success();
-          terminal.solved = true;
-          coresFound++;
-          document.getElementById('core-txt').textContent = `${coresFound} / 3`;
-          showToast('✅ 核心解鎖！思辨光環獲得充能！');
-          player.hp = Math.min(player.maxHp, player.hp + 40);
-          player.exp += 50;
-          checkLevelUp();
-          modal.style.display = 'none';
-          gameState = 'PLAY';
-          if (coresFound >= 3) triggerVictory();
-        } else {
-          AudioEngine.error();
-          showToast('❌ 思維外判陷阱！遭受數據反噬 -15 HP');
-          player.hp -= 15;
-          updateHUD();
-          if (player.hp <= 0) triggerGameOver();
-        }
+        if (quizTimerInterval) clearInterval(quizTimerInterval);
+        handleQuizAnswer(opt.correct, terminal);
       };
       opts.appendChild(btn);
     });
@@ -460,15 +586,37 @@
     modal.style.display = 'block';
   }
 
-  function triggerVictory() {
-    gameState = 'WIN';
-    AudioEngine.success();
+  function handleQuizAnswer(isCorrect, terminal) {
+    const modal = document.getElementById('quiz-modal');
+    const cfg = diffConfig[currentDifficulty];
+
+    if (isCorrect) {
+      Sound.win();
+      terminal.solved = true;
+      coresFound++;
+      document.getElementById('core-txt').textContent = `${coresFound} / 3`;
+      showToast('🌟 決策卓越！思辨能量注入，恢復生命力！');
+      player.hp = Math.min(player.maxHp, player.hp + 45);
+      player.exp += 50;
+      checkLevelUp();
+      modal.style.display = 'none';
+      gameState = 'PLAY';
+      if (coresFound >= 3) triggerVictory();
+    } else {
+      Sound.err();
+      player.hp -= cfg.penalty;
+      screenShake = 12;
+      showToast(`❌ 墮入思維外判陷阱！遭受數據反噬 -${cfg.penalty} HP`);
+      updateHUD();
+      if (player.hp <= 0) {
+        modal.style.display = 'none';
+        triggerGameOver();
+      }
+    }
   }
 
-  function triggerGameOver() {
-    gameState = 'OVER';
-    AudioEngine.error();
-  }
+  function triggerVictory() { gameState = 'WIN'; Sound.win(); }
+  function triggerGameOver() { gameState = 'OVER'; Sound.err(); }
 
   function showToast(msg) {
     const t = document.getElementById('toast');
@@ -477,20 +625,21 @@
     setTimeout(() => t.style.display = 'none', 3000);
   }
 
-  function spawnDamageText(x, y, text, color) {
-    damageTexts.push({ x, y, text, color, life: 30 });
+  function spawnText(x, y, text, color) {
+    floatingTexts.push({ x, y, text, color, life: 35 });
   }
 
-  function createParticles(x, y, color, count = 8) {
+  function createExplosion(x, y, color, count = 8) {
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const spd = Math.random() * 3 + 1;
+      const spd = Math.random() * 3.5 + 1;
       particles.push({
         x, y,
         vx: Math.cos(angle) * spd,
         vy: Math.sin(angle) * spd,
         color,
-        life: 20
+        life: 25,
+        size: Math.random() * 3 + 1.5
       });
     }
   }
@@ -502,8 +651,8 @@
       player.maxExp = Math.floor(player.maxExp * 1.4);
       player.maxHp += 20;
       player.hp = player.maxHp;
-      showToast(`🌟 LEVEL UP! 特工達到 LV.${player.lvl}！攻擊力大幅提升！`);
-      AudioEngine.success();
+      showToast(`⚡ 思辨進階！特工晉升 LV.${player.lvl}！`);
+      Sound.win();
     }
     updateHUD();
   }
@@ -511,27 +660,29 @@
   function updateHUD() {
     document.getElementById('hp-bar').style.width = `${Math.max(0, (player.hp / player.maxHp) * 100)}%`;
     document.getElementById('exp-bar').style.width = `${Math.min(100, (player.exp / player.maxExp) * 100)}%`;
-    document.getElementById('lvl-txt').textContent = player.lvl;
-    document.getElementById('kill-txt').textContent = kills;
   }
 
-  // 遊戲主循環 (Game Loop)
+  // 主更新循環
   function update() {
+    gameTime += 0.05;
+    if (screenShake > 0) screenShake--;
+
+    // 背景星光流動
+    stars.forEach(s => {
+      s.y += s.spd;
+      if (s.y > canvas.height) s.y = 0;
+    });
+
     if (gameState !== 'PLAY') return;
 
-    // 移動控制
-    let dx = 0;
-    let dy = 0;
-
+    let dx = 0, dy = 0;
     if (keys['w'] || keys['arrowup']) dy -= 1;
     if (keys['s'] || keys['arrowdown']) dy += 1;
     if (keys['a'] || keys['arrowleft']) dx -= 1;
     if (keys['d'] || keys['arrowright']) dx += 1;
 
-    // 觸控虛擬軸支援
-    if (touchMove.x !== 0 || touchMove.y !== 0) {
-      dx = touchMove.x;
-      dy = touchMove.y;
+    if (touchVec.x !== 0 || touchVec.y !== 0) {
+      dx = touchVec.x; dy = touchVec.y;
     }
 
     if (dx !== 0 || dy !== 0) {
@@ -539,32 +690,37 @@
       player.x += (dx / len) * player.speed;
       player.y += (dy / len) * player.speed;
       player.facing = { x: dx / len, y: dy / len };
+
+      // 玩家殘影軌跡 (精緻視覺)
+      if (Math.random() > 0.4) {
+        player.trail.push({ x: player.x, y: player.y, alpha: 0.6 });
+      }
     }
 
-    // 邊界防出界
     player.x = Math.max(player.r, Math.min(canvas.width - player.r, player.x));
     player.y = Math.max(player.r, Math.min(canvas.height - player.r, player.y));
+
+    // 玩家殘影淡出
+    player.trail.forEach(t => t.alpha -= 0.05);
+    player.trail = player.trail.filter(t => t.alpha > 0);
 
     if (player.attackTimer > 0) player.attackTimer--;
     if (player.attackCooldown > 0) player.attackCooldown--;
 
-    // 敵人邏輯
+    // 魔物邏輯
     enemies.forEach((en, idx) => {
       const angle = Math.atan2(player.y - en.y, player.x - en.x);
       en.x += Math.cos(angle) * en.speed;
       en.y += Math.sin(angle) * en.speed;
 
-      // 觸碰玩家傷害
-      const dist = Math.hypot(player.x - en.x, player.y - en.y);
-      if (dist < player.r + en.r) {
+      if (Math.hypot(player.x - en.x, player.y - en.y) < player.r + en.r) {
         player.hp -= 0.35;
         updateHUD();
         if (player.hp <= 0) triggerGameOver();
       }
 
-      // 死亡判定
       if (en.hp <= 0) {
-        createParticles(en.x, en.y, en.color, 14);
+        createExplosion(en.x, en.y, en.type === 'slime' ? '#f43f5e' : '#a855f7', 14);
         kills++;
         player.exp += 25;
         checkLevelUp();
@@ -573,28 +729,48 @@
       }
     });
 
-    // 粒子系統更新
-    particles.forEach((p, idx) => {
-      p.x += p.vx;
-      p.y += p.vy;
-      p.life--;
-      if (p.life <= 0) particles.splice(idx, 1);
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.life--;
     });
+    particles = particles.filter(p => p.life > 0);
 
-    // 飄字更新
-    damageTexts.forEach((d, idx) => {
-      d.y -= 0.8;
-      d.life--;
-      if (d.life <= 0) damageTexts.splice(idx, 1);
+    floatingTexts.forEach(f => {
+      f.y -= 0.8; f.life--;
     });
+    floatingTexts = floatingTexts.filter(f => f.life > 0);
 
     updateHUD();
   }
 
+  // 渲染畫布 (精美特效層次)
   function draw() {
+    ctx.save();
+
+    // 螢幕震動特效
+    if (screenShake > 0) {
+      const sx = (Math.random() - 0.5) * screenShake * 2;
+      const sy = (Math.random() - 0.5) * screenShake * 2;
+      ctx.translate(sx, sy);
+    }
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 繪製背景網格 (賽博空間風格)
+    // 1. 深度漸層背景
+    const bgGrad = ctx.createRadialGradient(480, 300, 50, 480, 300, 550);
+    bgGrad.addColorStop(0, '#0a1329');
+    bgGrad.addColorStop(1, '#030712');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 2. 星空粒子
+    ctx.fillStyle = 'rgba(0, 240, 255, 0.4)';
+    stars.forEach(s => {
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // 3. 賽博霓虹網格 (具備微光透視)
     ctx.strokeStyle = 'rgba(0, 240, 255, 0.06)';
     ctx.lineWidth = 1;
     for (let x = 0; x < canvas.width; x += 40) {
@@ -604,203 +780,373 @@
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
     }
 
-    // 繪製倫理終端
-    terminals.forEach((term, idx) => {
+    // 4. 繪製終端 (全息能量星環)
+    terminals.forEach(term => {
       ctx.save();
       ctx.translate(term.x, term.y);
 
-      // 光環
-      ctx.fillStyle = term.solved ? 'rgba(0, 255, 170, 0.15)' : 'rgba(255, 230, 0, 0.15)';
+      // 動態能量旋轉環
+      ctx.save();
+      ctx.rotate(gameTime * 0.8);
+      ctx.strokeStyle = term.solved ? 'rgba(16, 185, 129, 0.4)' : 'rgba(251, 191, 36, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 8]);
       ctx.beginPath();
-      ctx.arc(0, 0, 36, 0, Math.PI * 2);
+      ctx.arc(0, 0, 42, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+
+      // 底盤全息光芒
+      const tGrad = ctx.createRadialGradient(0, 0, 5, 0, 0, 38);
+      tGrad.addColorStop(0, term.solved ? 'rgba(16, 185, 129, 0.3)' : 'rgba(251, 191, 36, 0.25)');
+      tGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = tGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, 38, 0, Math.PI * 2);
       ctx.fill();
 
-      // 基座
-      ctx.strokeStyle = term.solved ? '#00ffaa' : '#ffe600';
+      // 核心六角基座
+      ctx.fillStyle = '#0f172a';
+      ctx.strokeStyle = term.solved ? '#10b981' : '#fbbf24';
       ctx.lineWidth = 2;
-      ctx.strokeRect(-18, -18, 36, 36);
+      drawHexagon(ctx, 0, 0, 20);
+      ctx.fill();
+      ctx.stroke();
 
-      // 終端圖示
-      ctx.fillStyle = term.solved ? '#00ffaa' : '#ffe600';
-      ctx.font = 'bold 16px sans-serif';
+      // 核心圖示
+      ctx.fillStyle = term.solved ? '#10b981' : '#fbbf24';
+      ctx.font = 'bold 15px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(term.solved ? '✓' : '⚡', 0, 0);
 
-      // 提示
       if (!term.solved) {
-        ctx.font = '11px sans-serif';
         ctx.fillStyle = '#fff';
-        ctx.fillText('按 [E] 查核', 0, 30);
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillText('按 [E] 查核', 0, 32);
       }
       ctx.restore();
     });
 
-    // 繪製敵人
+    // 5. 繪製精美敵人
     enemies.forEach(en => {
       ctx.save();
-      ctx.fillStyle = en.color;
-      ctx.shadowColor = en.color;
-      ctx.shadowBlur = 10;
-      ctx.beginPath();
-      ctx.arc(en.x, en.y, en.r, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.translate(en.x, en.y);
+
+      if (en.type === 'slime') {
+        // 幻覺史萊姆：液態呼吸變形
+        const wobble = Math.sin(gameTime * 4 + en.x) * 2.5;
+        ctx.fillStyle = '#f43f5e';
+        ctx.shadowColor = '#f43f5e';
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, en.r + wobble, en.r - wobble, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 核心偽造資訊符號
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#ffe4e6';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('假', 0, 0);
+      } else {
+        // 偏見無人機：旋轉掃描光束與三角外殼
+        ctx.save();
+        ctx.rotate(gameTime * 3);
+        ctx.strokeStyle = 'rgba(168, 85, 247, 0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(0, 0, en.r + 8, 0, Math.PI / 2);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.fillStyle = '#a855f7';
+        ctx.shadowColor = '#a855f7';
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.moveTo(0, -en.r);
+        ctx.lineTo(en.r, en.r * 0.8);
+        ctx.lineTo(-en.r, en.r * 0.8);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('BIAS', 0, 4);
+      }
 
       // 血條
-      ctx.fillStyle = 'rgba(255,255,255,0.2)';
-      ctx.fillRect(en.x - 15, en.y - 24, 30, 4);
-      ctx.fillStyle = '#ff0055';
-      ctx.fillRect(en.x - 15, en.y - 24, (en.hp / 40) * 30, 4);
-
-      // 標籤
       ctx.shadowBlur = 0;
-      ctx.fillStyle = '#dbe7ff';
-      ctx.font = '10px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(en.name, en.x, en.y - 28);
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.fillRect(-16, -en.r - 12, 32, 4);
+      ctx.fillStyle = '#f43f5e';
+      ctx.fillRect(-16, -en.r - 12, (en.hp / en.maxHp) * 32, 4);
       ctx.restore();
     });
 
-    // 繪製攻擊特效 (光刃揮動軌跡)
-    if (player.isAttacking && player.attackTimer > 0) {
+    // 6. 玩家殘影
+    player.trail.forEach(t => {
       ctx.save();
-      ctx.strokeStyle = '#00f0ff';
-      ctx.lineWidth = 6;
-      ctx.shadowColor = '#00f0ff';
-      ctx.shadowBlur = 15;
-      const angle = Math.atan2(player.facing.y, player.facing.x);
+      ctx.fillStyle = `rgba(0, 240, 255, ${t.alpha * 0.35})`;
       ctx.beginPath();
-      ctx.arc(player.x, player.y, 45, angle - Math.PI / 3, angle + Math.PI / 3);
+      ctx.arc(t.x, t.y, player.r * 0.9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    });
+
+    // 7. 攻擊光刃揮舞弧度 (高階漸層粒子斬擊)
+    if (player.attackTimer > 0) {
+      ctx.save();
+      const angle = Math.atan2(player.facing.y, player.facing.x);
+      const arcGrad = ctx.createLinearGradient(
+        player.x, player.y,
+        player.x + player.facing.x * 50,
+        player.y + player.facing.y * 50
+      );
+      arcGrad.addColorStop(0, 'rgba(0, 240, 255, 0.1)');
+      arcGrad.addColorStop(1, '#00f0ff');
+
+      ctx.strokeStyle = arcGrad;
+      ctx.lineWidth = 7;
+      ctx.shadowColor = '#00f0ff';
+      ctx.shadowBlur = 18;
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, 48, angle - Math.PI / 2.8, angle + Math.PI / 2.8);
       ctx.stroke();
       ctx.restore();
     }
 
-    // 繪製玩家特工
+    // 8. 玩家本體特工 (具備能量機甲與光錐)
     ctx.save();
     ctx.translate(player.x, player.y);
-    ctx.fillStyle = '#00f0ff';
+
+    // 視向探測光錐
+    const faceAngle = Math.atan2(player.facing.y, player.facing.x);
+    const coneGrad = ctx.createRadialGradient(0, 0, 10, 0, 0, 70);
+    coneGrad.addColorStop(0, 'rgba(0, 240, 255, 0.22)');
+    coneGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = coneGrad;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, 70, faceAngle - 0.4, faceAngle + 0.4);
+    ctx.closePath();
+    ctx.fill();
+
+    // 外骨骼護甲
+    ctx.fillStyle = '#0f172a';
+    ctx.strokeStyle = '#00f0ff';
+    ctx.lineWidth = 2.5;
     ctx.shadowColor = '#00f0ff';
-    ctx.shadowBlur = 14;
+    ctx.shadowBlur = 15;
     ctx.beginPath();
     ctx.arc(0, 0, player.r, 0, Math.PI * 2);
     ctx.fill();
+    ctx.stroke();
 
-    // 視線方向指示
+    // 核心胸燈
+    ctx.fillStyle = '#00f0ff';
+    ctx.beginPath();
+    ctx.arc(0, 0, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 視線瞄準眼
     ctx.fillStyle = '#fff';
     ctx.beginPath();
-    ctx.arc(player.facing.x * 10, player.facing.y * 10, 4, 0, Math.PI * 2);
+    ctx.arc(player.facing.x * 11, player.facing.y * 11, 4, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
 
-    // 繪製粒子
+    // 9. 爆炸粒子
     particles.forEach(p => {
+      ctx.save();
       ctx.fillStyle = p.color;
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 6;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
     });
 
-    // 繪製傷害文字
-    damageTexts.forEach(d => {
-      ctx.font = 'bold 14px sans-serif';
-      ctx.fillStyle = d.color;
-      ctx.fillText(d.text, d.x, d.y);
+    // 10. 飄動傷害文字
+    floatingTexts.forEach(f => {
+      ctx.save();
+      ctx.font = 'bold 15px sans-serif';
+      ctx.fillStyle = f.color;
+      ctx.shadowColor = f.color;
+      ctx.shadowBlur = 8;
+      ctx.fillText(f.text, f.x, f.y);
+      ctx.restore();
     });
 
-    // 勝利與失敗畫面覆蓋
+    // 11. 結算畫面
     if (gameState === 'WIN') {
-      drawOverlayScreen('🌟 數碼網絡全面淨化！', '特工已集齊 3 大「科技向善」核心，成功驅散盲信偏見！', '#00ffaa');
+      drawCertificateScreen();
     } else if (gameState === 'OVER') {
-      drawOverlayScreen('⚠️ 思維被 AI 幻覺侵蝕', '特工思辨防線瓦解，請重新審視事實查核準則！', '#ff0055');
+      drawFailScreen();
     }
+
+    ctx.restore();
   }
 
-  function drawOverlayScreen(title, sub, color) {
-    ctx.fillStyle = 'rgba(7, 11, 20, 0.88)';
+  function drawHexagon(c, x, y, r) {
+    c.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = (Math.PI / 3) * i;
+      const hx = x + r * Math.cos(a);
+      const hy = y + r * Math.sin(a);
+      if (i === 0) c.moveTo(hx, hy);
+      else c.lineTo(hx, hy);
+    }
+    c.closePath();
+  }
+
+  // 通關榮譽認證屏幕
+  function drawCertificateScreen() {
+    ctx.fillStyle = 'rgba(3, 7, 18, 0.96)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.strokeStyle = '#00f0ff';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(30, 24, canvas.width - 60, canvas.height - 48);
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(36, 30, canvas.width - 72, canvas.height - 60);
+
+    ctx.textAlign = 'center';
+
+    ctx.fillStyle = '#f43f5e';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillText('CARITAS YUEN LONG CHAN CHUN HA SECONDARY SCHOOL', canvas.width / 2, 70);
+    ctx.fillStyle = '#a855f7';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText('明愛元朗陳震夏中學 — 校本科技向善實踐證書', canvas.width / 2, 92);
+
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 30px sans-serif';
+    ctx.fillText('🎖️ AI 特工數字素養認證 🎖️', canvas.width / 2, 145);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '15px sans-serif';
+    ctx.fillText(`茲證明 學生成功於【${diffConfig[currentDifficulty].desc}】通過 3 大核心終端實戰考驗`, canvas.width / 2, 195);
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '13px sans-serif';
+    ctx.fillText('具備「事實查核（破除幻覺）」、「高階提示詞建構」及「恪守學術誠信」之核心素養，', canvas.width / 2, 230);
+    ctx.fillText('成功驅逐虛假資訊與偏見算法，展現「科技向善」精神！', canvas.width / 2, 255);
+
+    // 數據統計條
+    ctx.fillStyle = 'rgba(0, 240, 255, 0.08)';
+    ctx.fillRect(canvas.width / 2 - 200, 290, 400, 50);
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.3)';
+    ctx.strokeRect(canvas.width / 2 - 200, 290, 400, 50);
+
+    ctx.fillStyle = '#00f0ff';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.fillText(`最終等級: LV.${player.lvl} | 殲滅魔物: ${kills} 隻 | 剩餘防護: ${Math.round(player.hp)} HP`, canvas.width / 2, 322);
+
+    // 簽章區域
+    ctx.fillStyle = '#64748b';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillText('策劃設計人：', canvas.width / 2 - 130, 420);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText('張耀宗 副校長', canvas.width / 2 - 130, 448);
+
+    ctx.fillStyle = '#64748b';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillText('研發指導機構：', canvas.width / 2 + 130, 420);
+    ctx.fillStyle = '#f43f5e';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.fillText('明愛元朗陳震夏中學', canvas.width / 2 + 130, 448);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = '11px sans-serif';
+    ctx.fillText('點擊螢幕任意處以重新挑戰', canvas.width / 2, 530);
+  }
+
+  function drawFailScreen() {
+    ctx.fillStyle = 'rgba(3, 7, 18, 0.94)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.textAlign = 'center';
-    ctx.fillStyle = color;
-    ctx.font = 'bold 28px sans-serif';
-    ctx.fillText(title, canvas.width / 2, canvas.height / 2 - 20);
-    ctx.fillStyle = '#dbe7ff';
-    ctx.font = '15px sans-serif';
-    ctx.fillText(sub, canvas.width / 2, canvas.height / 2 + 20);
+    ctx.fillStyle = '#f43f5e';
+    ctx.font = 'bold 26px sans-serif';
+    ctx.fillText('⚠️ 特工批判防線瓦解', canvas.width / 2, canvas.height / 2 - 30);
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('思維已被「AI 幻覺與偏見」全面侵蝕。請牢記：切勿盲信生成結果，務必主動查核！', canvas.width / 2, canvas.height / 2 + 10);
     ctx.fillStyle = '#00f0ff';
-    ctx.font = '13px sans-serif';
-    ctx.fillText('點擊螢幕或重新整理頁面以重試', canvas.width / 2, canvas.height / 2 + 65);
+    ctx.font = '12px sans-serif';
+    ctx.fillText('點擊螢幕重新整裝出發', canvas.width / 2, canvas.height / 2 + 60);
   }
 
   canvas.addEventListener('click', () => {
     if (gameState === 'WIN' || gameState === 'OVER') location.reload();
   });
 
-  // 移動端觸控搖桿綁定
-  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  if (isTouchDevice) {
-    document.getElementById('touch-controls').style.display = 'flex';
+  // 觸控虛擬搖桿 (iPad / 手機相容)
+  if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+    document.getElementById('touch-bar').style.display = 'flex';
     const dpad = document.getElementById('dpad');
     const stick = document.getElementById('dpad-stick');
     let touchId = null;
 
     dpad.addEventListener('touchstart', e => {
-      AudioEngine.init();
-      const touch = e.changedTouches[0];
-      touchId = touch.identifier;
-      updateJoystick(touch);
+      Sound.init();
+      const t = e.changedTouches[0];
+      touchId = t.identifier;
+      moveStick(t);
     }, { passive: false });
 
     dpad.addEventListener('touchmove', e => {
       for (let i = 0; i < e.changedTouches.length; i++) {
         if (e.changedTouches[i].identifier === touchId) {
-          updateJoystick(e.changedTouches[i]);
+          moveStick(e.changedTouches[i]);
           break;
         }
       }
     }, { passive: false });
 
-    const resetStick = () => {
-      touchMove = { x: 0, y: 0 };
+    const stopStick = () => {
+      touchVec = { x: 0, y: 0 };
       stick.style.transform = `translate(0px, 0px)`;
     };
-    dpad.addEventListener('touchend', resetStick);
-    dpad.addEventListener('touchcancel', resetStick);
+    dpad.addEventListener('touchend', stopStick);
+    dpad.addEventListener('touchcancel', stopStick);
 
-    function updateJoystick(touch) {
+    function moveStick(touch) {
       const rect = dpad.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      let dx = touch.clientX - centerX;
-      let dy = touch.clientY - centerY;
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      let dx = touch.clientX - cx;
+      let dy = touch.clientY - cy;
       const dist = Math.hypot(dx, dy);
-      const maxR = 40;
+      const maxR = 36;
       if (dist > maxR) {
         dx = (dx / dist) * maxR;
         dy = (dy / dist) * maxR;
       }
       stick.style.transform = `translate(${dx}px, ${dy}px)`;
-      touchMove = { x: dx / maxR, y: dy / maxR };
+      touchVec = { x: dx / maxR, y: dy / maxR };
     }
 
-    document.getElementById('btn-attack').addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      AudioEngine.init();
-      triggerAttack();
+    document.getElementById('btn-attack').addEventListener('touchstart', e => {
+      e.preventDefault(); Sound.init(); triggerAttack();
     });
-    document.getElementById('btn-interact').addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      AudioEngine.init();
-      triggerInteract();
+    document.getElementById('btn-interact').addEventListener('touchstart', e => {
+      e.preventDefault(); Sound.init(); triggerInteract();
     });
   }
 
-  function gameLoop() {
+  function loop() {
     update();
     draw();
-    requestAnimationFrame(gameLoop);
+    requestAnimationFrame(loop);
   }
-
-  // 啟動主循環
-  requestAnimationFrame(gameLoop);
+  requestAnimationFrame(loop);
 </script>
 
 </body>
